@@ -137,90 +137,97 @@ export default class GameController extends cc.Component {
   }
 
   /** Обработка клика + анимации + проверка конца */
-  private async onTileClicked(row: number, col: number) {
-    // 1) модель
-    let res: ClickResult;
-    // if (this.useBooster === "teleport" && this.teleportFrom) {
-    //   const [r2, c2] = this.teleportFrom;
-    //   res = this.model.click(row, col, "teleport", r2, c2) as ClickResult;
-    // } else {
-    //   res = this.model.click(row, col, this.useBooster) as ClickResult;
-    // }
-        if (this.useBooster === "teleport") {
-      // первый клик — запоминаем откуда
-      if (!this.teleportFrom) {
-        this.teleportFrom = [row, col];
-        this.updateUI();
-        return;  // ждём второго клика
-      }
-      // второй клик — выполняем обмен
-      const [r1, c1] = this.teleportFrom;
-      res = this.model.click(row, col, "teleport", r1, c1) as ClickResult;
-    } else {
-      // обычное удаление или бомба
-      res = this.model.click(row, col, this.useBooster) as ClickResult;
+private async onTileClicked(row: number, col: number) {
+  let res: ClickResult;
+
+  if (this.useBooster === "teleport") {
+    if (!this.teleportFrom) {
+      this.teleportFrom = [row, col];
+      this.updateUI();
+      return;
     }
-    this.useBooster = null;
+
+    const [r1, c1] = this.teleportFrom;
+
+    res = this.model.click(row, col, "teleport", r1, c1);
+
+    if (res.moved.length === 0) {
+      this.teleportFrom = null;
+      this.useBooster = null;
+      this.updateUI();
+      return;
+    }
+
+    // Ждём завершения анимации обмена тайлов перед перерисовкой
+    await Promise.all(res.moved.map(mv => {
+      const node = this.gridNode.getChildByName(`tile_${mv.from.r}_${mv.from.c}`)!;
+      return new Promise<void>((resolve) => {
+        cc.tween(node)
+          .to(0.2, { position: this.toPosition(mv.to.c, mv.to.r) }, { easing: cc.easing.sineInOut })
+          .call(() => resolve())
+          .start();
+      });
+    }));
+
+    // ⏳⚠️ Сначала полностью ждём анимацию, только затем перерисовываем поле
+    this.renderGrid();
+
     this.teleportFrom = null;
+    this.useBooster = null;
     this.updateUI();
-
-    // 2) «сгорание»
-    await Promise.all(
-      res.removed.map(({ row, col }) => {
-        const n = this.gridNode.getChildByName(`tile_${row}_${col}`)!;
-        return new Promise<void>((ok) => {
-          cc.tween(n)
-            .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
-            .call(() => {
-              n.destroy();
-              ok();
-            })
-            .start();
-        });
-      })
-    );
-
-    // 3) падение
-    for (const mv of res.moved) {
-      const key = `tile_${mv.from.r}_${mv.from.c}`;
-      const n = this.gridNode.getChildByName(key)!;
-      n.name = `tile_${mv.to.r}_${mv.to.c}`;
-      cc.tween(n)
-        .to(
-          0.3,
-          { position: this.toPosition(mv.to.c, mv.to.r) },
-          { easing: cc.easing.quadOut }
-        )
-        .start();
-    }
-
-    // 4) новые сверху
-    for (const cr of res.created) {
-      const n = cc.instantiate(this.tilePrefab);
-      n.name = `tile_${cr.row}_${cr.col}`;
-      const up = this.toPosition(cr.col, -1);
-      n.setPosition(new cc.Vec3(up.x, up.y + this.tileSize, 0));
-      n.getComponent("TileView")!.init(
-        cr as any,
-        this.onTileClicked.bind(this)
-      );
-      this.gridNode.addChild(n);
-      cc.tween(n)
-        .to(
-          0.3,
-          { position: this.toPosition(cr.col, cr.row) },
-          { easing: cc.easing.backOut }
-        )
-        .start();
-    }
-
-    // 5) проверка конца
-    if (this.model.score >= this.model.targetScore) {
-      this.showPopup(this.winPopup);
-    } else if (this.model.movesLeft <= 0) {
-      this.showPopup(this.losePopup);
-    }
+    return;
   }
+
+  res = this.model.click(row, col, this.useBooster);
+
+  this.useBooster = null;
+  this.teleportFrom = null;
+  this.updateUI();
+
+  await Promise.all(
+    res.removed.map(({ row, col }) => {
+      const n = this.gridNode.getChildByName(`tile_${row}_${col}`)!;
+      return new Promise<void>((resolve) => {
+        cc.tween(n)
+          .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
+          .call(() => { n.destroy(); resolve(); })
+          .start();
+      });
+    })
+  );
+
+  for (const mv of res.moved) {
+    const key = `tile_${mv.from.r}_${mv.from.c}`;
+    const n = this.gridNode.getChildByName(key)!;
+    n.name = `tile_${mv.to.r}_${mv.to.c}`;
+    cc.tween(n)
+      .to(0.3, { position: this.toPosition(mv.to.c, mv.to.r) }, { easing: cc.easing.quadOut })
+      .start();
+  }
+
+  for (const cr of res.created) {
+    const n = cc.instantiate(this.tilePrefab);
+    n.name = `tile_${cr.row}_${cr.col}`;
+    const up = this.toPosition(cr.col, -1);
+    n.setPosition(new cc.Vec3(up.x, up.y + this.tileSize, 0));
+    n.getComponent("TileView")!.init(cr as any, this.onTileClicked.bind(this));
+    this.gridNode.addChild(n);
+    cc.tween(n)
+      .to(0.3, { position: this.toPosition(cr.col, cr.row) }, { easing: cc.easing.backOut })
+      .start();
+  }
+
+  if (this.model.score >= this.model.targetScore) {
+    this.showPopup(this.winPopup);
+  } else if (this.model.movesLeft <= 0) {
+    this.showPopup(this.losePopup);
+  }
+}
+
+
+
+
+
 
   /** Показ нужного попапа + блок кликов по полю */
   private showPopup(popup: cc.Node) {

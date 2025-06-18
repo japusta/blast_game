@@ -60,9 +60,6 @@ export class BombBooster implements IBooster {
 export class TeleportBooster implements IBooster {
   private _count: number;
 
-  /**
-   * @param initialCount сколько раз можно использовать телепорт
-   */
   constructor(initialCount: number = 5) {
     this._count = initialCount;
   }
@@ -76,18 +73,24 @@ export class TeleportBooster implements IBooster {
   ): TileModel[] {
     if (this._count <= 0) return [];
 
+    // Вместо свопа цветов — меняем объекты тайлов местами в grid
     const t1 = board.grid[r1][c1];
     const t2 = board.grid[r2][c2];
-    [t1.color, t2.color] = [t2.color, t1.color];
+
+    // поменять сами ссылки в массиве
+    board.grid[r1][c1] = t2;
+    board.grid[r2][c2] = t1;
+
+    // обновить их внутренние координаты
+    t2.row = r1;  t2.col = c1;
+    t1.row = r2;  t1.col = c2;
+
     return [];
   }
 
   public decrement(): void {
-    if (this._count > 0) {
-      this._count--;
-    }
+    if (this._count > 0) this._count--;
   }
-
   public get count(): number {
     return this._count;
   }

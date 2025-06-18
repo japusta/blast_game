@@ -43,111 +43,108 @@ export class GameModel {
     return Math.floor(Math.random() * TileModel.ColorCount);
   }
 
-  public click(
-    row: number,
-    col: number,
-    useBooster: string | null = null,
-    r2?: number,
-    c2?: number
-  ): ClickResult {
-    // если нет ходов — сразу выходим
-    if (this.movesLeft <= 0) {
-      return { removed: [], moved: [], created: [], super: null };
-    }
-
-    // 1) Собираем группу для удаления
-    let toRemove: TileModel[] = [];
-    if (useBooster === "bomb") {
-      toRemove = this.bomb.use(row, col, this.board);
-      this.bomb.decrement();
-    }
-        else if (useBooster === "teleport" && r2 != null && c2 != null) {
-      // выполнит обмен
-      this.teleport.use(row, col, this.board, r2, c2);
-      this.teleport.decrement();
-      // вернём ClickResult только с перемещениями двух тайлов
-      const moved = [
-        { from: { r: row, c: col }, to: { r: r2, c: c2 } },
-        { from: { r: r2, c: c2 }, to: { r: row, c: col } }
-      ];
-      return { removed: [], moved, created: [], super: null };
-    }
-    else {
-      const tile = this.board.grid[row][col];
-      if (tile.isSuper) {
-        toRemove = this.activateSuper(tile);
-      } else {
-        toRemove = this.board.findGroup(tile);
-      }
-    }
-
-    // если нечего удалять — выход
-    if (toRemove.length <= 1) {
-      return { removed: [], moved: [], created: [], super: null };
-    }
-
-    // 2) Удаляем и считаем очки
-    const removed = toRemove.map((t) => ({ row: t.row, col: t.col }));
-    for (const t of toRemove) {
-      this.board.grid[t.row][t.col] = null as any;
-    }
-    this.score += this.calcPoints(toRemove.length);
-    this.movesLeft -= 1;
-
-    // 3) Обрабатываем падение существующих и появление новых
-    const rows = this.board.rows;
-    const cols = this.board.cols;
-    const moved: ClickResult["moved"] = [];
-    const created: ClickResult["created"] = [];
-
-    for (let c = 0; c < cols; c++) {
-      // собираем все тайлы в колонке снизу вверх
-      const stack: TileModel[] = [];
-      for (let r = rows - 1; r >= 0; r--) {
-        const t = this.board.grid[r][c];
-        if (t) stack.push(t);
-      }
-      // переписываем в grid и фиксируем moved
-      let writeRow = rows - 1;
-      for (const tile of stack) {
-        const oldRow = tile.row;
-        if (oldRow !== writeRow) {
-          moved.push({
-            from: { r: oldRow, c },
-            to: { r: writeRow, c },
-          });
-          tile.row = writeRow;
-        }
-        this.board.grid[writeRow][c] = tile;
-        writeRow--;
-      }
-      // сверху создаём недостающие
-      for (let r = writeRow; r >= 0; r--) {
-        const color = this.randomColor();
-        const tile = new TileModel(r, c, color);
-        this.board.grid[r][c] = tile;
-        created.push({ row: r, col: c, color });
-      }
-    }
-
-    // 4) Перемешивания, win/lose
-    let superTile: { row: number; col: number; type: SuperType } | null = null;
-    // (если наш BoardModel.removeGroup устанавливает супер-тайлы, можно захватить тут)
-    // superTile = this.board.removeGroupMarker();
-
-    if (this.score >= this.targetScore) {
-      console.log("Win");
-    } else if (!this.board.hasMoves()) {
-      if (this.shuffleCount < this.maxShuffles) {
-        this.board.shuffle();
-        this.shuffleCount++;
-      } else {
-        console.log("Lose");
-      }
-    }
-
-    return { removed, moved, created, super: superTile };
+public click(
+  row: number,
+  col: number,
+  useBooster: string | null = null,
+  r2?: number,
+  c2?: number
+): ClickResult {
+  if (this.movesLeft <= 0) {
+    return { removed: [], moved: [], created: [], super: null };
   }
+
+  let toRemove: TileModel[] = [];
+
+  if (useBooster === "bomb") {
+    toRemove = this.bomb.use(row, col, this.board);
+    this.bomb.decrement();
+  } else if (useBooster === "teleport" && r2 != null && c2 != null) {
+    // Проверка соседних тайлов (только горизонталь или вертикаль)
+    const isAdjacent =
+      (row === r2 && Math.abs(col - c2) === 1) ||
+      (col === c2 && Math.abs(row - r2) === 1);
+
+    if (!isAdjacent) {
+      // Запрет обмена, если не соседние
+      return { removed: [], moved: [], created: [], super: null };
+    }
+
+    // Обмен, если соседние тайлы
+    this.teleport.use(row, col, this.board, r2, c2);
+    this.teleport.decrement();
+
+    const moved = [
+      { from: { r: row, c: col }, to: { r: r2, c: c2 } },
+      { from: { r: r2, c: c2 }, to: { r: row, c: col } },
+    ];
+    this.movesLeft -= 1; // расход хода на обмен
+    return { removed: [], moved, created: [], super: null };
+  } else {
+    const tile = this.board.grid[row][col];
+    if (tile.isSuper) {
+      toRemove = this.activateSuper(tile);
+    } else {
+      toRemove = this.board.findGroup(tile);
+    }
+  }
+
+  if (toRemove.length <= 1) {
+    return { removed: [], moved: [], created: [], super: null };
+  }
+
+  const removed = toRemove.map((t) => ({ row: t.row, col: t.col }));
+  for (const t of toRemove) {
+    this.board.grid[t.row][t.col] = null as any;
+  }
+  this.score += this.calcPoints(toRemove.length);
+  this.movesLeft -= 1;
+
+  const rows = this.board.rows;
+  const cols = this.board.cols;
+  const moved: ClickResult["moved"] = [];
+  const created: ClickResult["created"] = [];
+
+  for (let c = 0; c < cols; c++) {
+    const stack: TileModel[] = [];
+    for (let r = rows - 1; r >= 0; r--) {
+      const t = this.board.grid[r][c];
+      if (t) stack.push(t);
+    }
+    let writeRow = rows - 1;
+    for (const tile of stack) {
+      const oldRow = tile.row;
+      if (oldRow !== writeRow) {
+        moved.push({ from: { r: oldRow, c }, to: { r: writeRow, c } });
+        tile.row = writeRow;
+      }
+      this.board.grid[writeRow][c] = tile;
+      writeRow--;
+    }
+    for (let r = writeRow; r >= 0; r--) {
+      const color = this.randomColor();
+      const tile = new TileModel(r, c, color);
+      this.board.grid[r][c] = tile;
+      created.push({ row: r, col: c, color });
+    }
+  }
+
+  let superTile: { row: number; col: number; type: SuperType } | null = null;
+
+  if (this.score >= this.targetScore) {
+    console.log("Win");
+  } else if (!this.board.hasMoves()) {
+    if (this.shuffleCount < this.maxShuffles) {
+      this.board.shuffle();
+      this.shuffleCount++;
+    } else {
+      console.log("Lose");
+    }
+  }
+
+  return { removed, moved, created, super: superTile };
+}
+
 
   private activateSuper(tile: TileModel): TileModel[] {
     const { row, col, superType } = tile;

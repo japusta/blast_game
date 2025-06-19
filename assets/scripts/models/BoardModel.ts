@@ -4,7 +4,7 @@ export class BoardModel {
   grid: TileModel[][] = [];
   rows: number;
   cols: number;
-  superThreshold = 111;
+  superThreshold = 5;
 
   private allColors = [
     TileColor.Red,
@@ -34,30 +34,33 @@ export class BoardModel {
     return new TileModel(r, c, color);
   }
 
-  findGroup(start: TileModel): TileModel[] {
-    if (!start) return [];
-    const visited = new Set<string>();
-    const result: TileModel[] = [];
-    const stack = [start];
-    const target = start.color;
+findGroup(start: TileModel): TileModel[] {
+  if (!start) return [];
+  const visited = new Set<string>();
+  const result: TileModel[] = [];
+  const stack = [start];
+  const target = start.color;
 
-    while (stack.length) {
-      const t = stack.pop()!;
-      const key = `${t.row},${t.col}`;
-      if (visited.has(key)) continue;
-      visited.add(key);
-      result.push(t);
+  while (stack.length) {
+    const t = stack.pop()!;
+    const key = `${t.row},${t.col}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
+    result.push(t);
 
-      for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        const nr = t.row + dr, nc = t.col + dc;
-        if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
-          const n = this.grid[nr][nc];
-          if (n.color === target) stack.push(n);
+    for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nr = t.row + dr, nc = t.col + dc;
+      if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
+        const n = this.grid[nr][nc];
+        if (n.color === target && !visited.has(`${nr},${nc}`)) {
+          stack.push(n);
         }
       }
     }
-    return result;
   }
+  return result;
+}
+
 
 removeGroup(group: TileModel[]): {
   moved: { from: { r: number, c: number }, to: { r: number, c: number } }[],

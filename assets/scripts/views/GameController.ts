@@ -125,8 +125,7 @@ export default class GameController extends cc.Component {
     this.gridNode.removeAllChildren();
     for (const rowArr of this.model.board.grid) {
       for (const tile of rowArr) {
-          if (!tile) continue; // <<< очень важно!
-
+        if (!tile) continue;
         const node = cc.instantiate(this.tilePrefab);
         node.name = `tile_${tile.row}_${tile.col}`;
         node.setPosition(this.toPosition(tile.col, tile.row));
@@ -134,8 +133,6 @@ export default class GameController extends cc.Component {
           .getComponent("TileView")!
           .init(tile, this.onTileClicked.bind(this));
         this.gridNode.addChild(node);
-        console.log("GRID:", this.model.board.grid.map(row => row.map(t => t ? (t.isSuper ? 'S' : t.color) : 'X')));
-
       }
     }
   }
@@ -192,15 +189,33 @@ export default class GameController extends cc.Component {
 
     res = this.model.click(row, col, this.useBooster);
 
-    
-
     this.useBooster = null;
     this.teleportFrom = null;
     this.updateUI();
 
+      // --- 1. МГНОВЕННОЕ ИСЧЕЗНОВЕНИЕ СУПЕРТАЙЛА ---
+  // Если клик был по супертайлу (res.super — координаты активированного)
+  if (res.super && res.removed.some(t => t.row === res.super!.row && t.col === res.super!.col)) {
+    const { row: sRow, col: sCol } = res.super;
+    const superNode = this.gridNode.getChildByName(`tile_${sRow}_${sCol}`);
+    if (superNode) {
+      await new Promise<void>((resolve) => {
+        cc.tween(superNode)
+          .to(0.18, { scale: 0.1, opacity: 0 }, { easing: cc.easing.cubicIn })
+          .call(() => {
+            superNode.destroy();
+            resolve();
+          })
+          .start();
+      });
+    }
+  }
+
+    // --- 1. АНИМАЦИЯ УДАЛЕНИЯ ---
     await Promise.all(
       res.removed.map(({ row, col }) => {
-        const n = this.gridNode.getChildByName(`tile_${row}_${col}`)!;
+        const n = this.gridNode.getChildByName(`tile_${row}_${col}`);
+        if (!n) return Promise.resolve();
         return new Promise<void>((resolve) => {
           cc.tween(n)
             .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
@@ -212,63 +227,57 @@ export default class GameController extends cc.Component {
         });
       })
     );
-if (res.super) {
-  const { row, col } = res.super;
 
-  // 🧹 Удалить все узлы с таким именем, чтобы не было наложений
-  const duplicates = this.gridNode.children.filter(n => n.name === `tile_${row}_${col}`);
-  duplicates.forEach(n => {
-    if (n && n.isValid) n.destroy();
-  });
+    // --- 2. АНИМАЦИЯ ПАДЕНИЯ ---
+    await Promise.all(
+      res.moved.map((mv) => {
+        const node = this.gridNode.getChildByName(
+          `tile_${mv.from.r}_${mv.from.c}`
+        );
+        if (!node) return Promise.resolve();
+        node.name = `tile_${mv.to.r}_${mv.to.c}`;
+        return new Promise<void>((resolve) => {
+          cc.tween(node)
+            .to(
+              0.3,
+              { position: this.toPosition(mv.to.c, mv.to.r) },
+              { easing: cc.easing.quadOut }
+            )
+            .call(() => resolve())
+            .start();
+        });
+      })
+    );
 
-  // 🔁 Перерисовать новый узел супертайла
-  const tile = this.model.board.grid[row][col];
-  const n = cc.instantiate(this.tilePrefab);
-  n.name = `tile_${row}_${col}`;
-  const up = this.toPosition(col, -1);
-  n.setPosition(new cc.Vec3(up.x, up.y + this.tileSize, 0));
-  n.getComponent("TileView")!.init(tile, this.onTileClicked.bind(this));
-  this.gridNode.addChild(n);
-  cc.tween(n)
-    .to(0.3, { position: this.toPosition(col, row) }, { easing: cc.easing.backOut })
-    .start();
-}
+    // --- 3. АНИМАЦИЯ ПОЯВЛЕНИЯ ---
+    await Promise.all(
+      res.created.map((cr) => {
+        const n = cc.instantiate(this.tilePrefab);
+        n.name = `tile_${cr.row}_${cr.col}`;
+        const up = this.toPosition(cr.col, -1);
+        n.setPosition(new cc.Vec3(up.x, up.y + this.tileSize, 0));
+        // ВНИМАНИЕ: теперь обязательно передавать модельку TileModel!
+        const tile = this.model.board.grid[cr.row][cr.col];
+        n.getComponent("TileView")!.init(tile, this.onTileClicked.bind(this));
+        this.gridNode.addChild(n);
+        return new Promise<void>((resolve) => {
+          cc.tween(n)
+            .to(
+              0.3,
+              { position: this.toPosition(cr.col, cr.row) },
+              { easing: cc.easing.backOut }
+            )
+            .call(() => resolve())
+            .start();
+        });
+      })
+    );
 
-    for (const mv of res.moved) {
-      const key = `tile_${mv.from.r}_${mv.from.c}`;
-      const n = this.gridNode.getChildByName(key)!;
-      n.name = `tile_${mv.to.r}_${mv.to.c}`;
-      cc.tween(n)
-        .to(
-          0.3,
-          { position: this.toPosition(mv.to.c, mv.to.r) },
-          { easing: cc.easing.quadOut }
-        )
-        .start();
-    }
+    // --- 4. ПОСЛЕ ВСЕХ АНИМАЦИЙ ПОЛНЫЙ ПЕРЕРЕНДЕР ---
+    this.renderGrid();
 
-    for (const cr of res.created) {
-      if (res.super && cr.row === res.super.row && cr.col === res.super.col) {
-        continue; // 👈 уже создан ниже
-      }
-      const n = cc.instantiate(this.tilePrefab);
-      n.name = `tile_${cr.row}_${cr.col}`;
-      const up = this.toPosition(cr.col, -1);
-      n.setPosition(new cc.Vec3(up.x, up.y + this.tileSize, 0));
-      n.getComponent("TileView")!.init(
-        cr as any,
-        this.onTileClicked.bind(this)
-      );
-      this.gridNode.addChild(n);
-      cc.tween(n)
-        .to(
-          0.3,
-          { position: this.toPosition(cr.col, cr.row) },
-          { easing: cc.easing.backOut }
-        )
-        .start();
-    }
-
+    // --- 5. UI & ENDGAME ---
+    this.updateUI();
     if (this.model.score >= this.model.targetScore) {
       this.showPopup(this.winPopup);
     } else if (this.model.movesLeft <= 0) {

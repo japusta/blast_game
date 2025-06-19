@@ -21,6 +21,7 @@ export class BoardModel {
   }
 
   private initGrid() {
+    this.grid = [];
     for (let r = 0; r < this.rows; r++) {
       this.grid[r] = [];
       for (let c = 0; c < this.cols; c++) {
@@ -29,94 +30,116 @@ export class BoardModel {
     }
   }
 
-  private createTile(r: number, c: number) {
-    const color = this.allColors[Math.floor(Math.random() * this.allColors.length)];
+  // Генерация нового тайла с защитой от авто-групп
+  private createTile(r: number, c: number): TileModel {
+    const forbiddenColors = new Set<number>();
+    // Запрет на три в ряд по горизонтали
+    if (c >= 2) {
+      const left1 = this.grid[r][c - 1];
+      const left2 = this.grid[r][c - 2];
+      if (left1 && left2 && left1.color === left2.color) {
+        forbiddenColors.add(left1.color);
+      }
+    }
+    // Запрет на три в ряд по вертикали
+    if (r >= 2) {
+      const down1 = this.grid[r - 1][c];
+      const down2 = this.grid[r - 2][c];
+      if (down1 && down2 && down1.color === down2.color) {
+        forbiddenColors.add(down1.color);
+      }
+    }
+    const availableColors = this.allColors.filter(col => !forbiddenColors.has(col));
+    const color = availableColors[Math.floor(Math.random() * availableColors.length)];
     return new TileModel(r, c, color);
   }
 
-findGroup(start: TileModel): TileModel[] {
-  if (!start) return [];
-  const visited = new Set<string>();
-  const result: TileModel[] = [];
-  const stack = [start];
-  const target = start.color;
+  // Flood-fill по сторонам для поиска всей группы
+  findGroup(start: TileModel): TileModel[] {
+    if (!start) return [];
+    const visited = new Set<string>();
+    const result: TileModel[] = [];
+    const stack = [start];
+    const target = start.color;
 
-  while (stack.length) {
-    const t = stack.pop()!;
-    const key = `${t.row},${t.col}`;
-    if (visited.has(key)) continue;
-    visited.add(key);
-    result.push(t);
+    while (stack.length) {
+      const t = stack.pop()!;
+      const key = `${t.row},${t.col}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+      result.push(t);
 
-    for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-      const nr = t.row + dr, nc = t.col + dc;
-      if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
-        const n = this.grid[nr][nc];
-        if (n.color === target && !visited.has(`${nr},${nc}`)) {
-          stack.push(n);
+      for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nr = t.row + dr, nc = t.col + dc;
+        if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
+          const n = this.grid[nr][nc];
+          if (n && n.color === target && !visited.has(`${nr},${nc}`)) {
+            stack.push(n);
+          }
         }
       }
     }
-  }
-  return result;
-}
-
-
-removeGroup(group: TileModel[]): {
-  moved: { from: { r: number, c: number }, to: { r: number, c: number } }[],
-  created: { row: number, col: number, color: number }[],
-  superTile: TileModel | null
-} {
-  // Удаляем
-  group.forEach(t => this.grid[t.row][t.col] = null!);
-
-  let superTile: TileModel | null = null;
-  if (group.length >= this.superThreshold) {
-    const base = group[0];
-    const superType = this.randomSuperType();
-    superTile = new TileModel(base.row, base.col, base.color, superType);
-    this.grid[base.row][base.col] = superTile;
+    return result;
   }
 
-  const moved: { from: { r: number, c: number }, to: { r: number, c: number } }[] = [];
+  // Удаляет группу, делает падение и заполняет новые тайлы
+  removeGroup(group: TileModel[]): {
+    moved: { from: { r: number, c: number }, to: { r: number, c: number } }[],
+    created: { row: number, col: number, color: number }[],
+    superTile: TileModel | null
+  } {
+    // Удаляем группу
+    for (const t of group) {
+      this.grid[t.row][t.col] = null!;
+    }
 
-  // applyGravity с трекингом перемещений
-  for (let c = 0; c < this.cols; c++) {
-    let pointer = this.rows - 1;
-    for (let r = this.rows - 1; r >= 0; r--) {
-      const tile = this.grid[r][c];
-      if (tile) {
-        if (pointer !== r) {
-          moved.push({ from: { r, c }, to: { r: pointer, c } });
+    let superTile: TileModel | null = null;
+    // Если нужна вставка супертайла
+    if (group.length >= this.superThreshold) {
+      // Берём первый тайл группы как базу
+      const base = group[0];
+      const superType = this.randomSuperType();
+      superTile = new TileModel(base.row, base.col, base.color, superType);
+      this.grid[base.row][base.col] = superTile;
+    }
+
+    const moved: { from: { r: number, c: number }, to: { r: number, c: number } }[] = [];
+
+    // ПАДЕНИЕ — всегда сверху вниз!
+    for (let c = 0; c < this.cols; c++) {
+      let pointer = this.rows - 1;
+      for (let r = this.rows - 1; r >= 0; r--) {
+        const tile = this.grid[r][c];
+        if (tile) {
+          if (pointer !== r) {
+            moved.push({ from: { r, c }, to: { r: pointer, c } });
+          }
+          this.grid[pointer][c] = tile;
           tile.row = pointer;
+          tile.col = c;
+          pointer--;
         }
-        this.grid[pointer][c] = tile;
-        pointer--;
+      }
+      // Очищаем всё выше pointer
+      for (let r = pointer; r >= 0; r--) {
+        this.grid[r][c] = null!;
       }
     }
-    for (let r = pointer; r >= 0; r--) {
-      this.grid[r][c] = null!;
-    }
-  }
 
-  const created: { row: number, col: number, color: number }[] = [];
-
-  // fillNewTiles с трекингом созданных
-  for (let c = 0; c < this.cols; c++) {
-    for (let r = 0; r < this.rows; r++) {
-      if (!this.grid[r][c]) {
-        const color = this.allColors[Math.floor(Math.random() * this.allColors.length)];
-        const tile = new TileModel(r, c, color);
-        this.grid[r][c] = tile;
-        created.push({ row: r, col: c, color });
+    const created: { row: number, col: number, color: number }[] = [];
+    // ЗАПОЛНЯЕМ пустоты
+    for (let c = 0; c < this.cols; c++) {
+      for (let r = 0; r < this.rows; r++) {
+        if (!this.grid[r][c]) {
+          const tile = this.createTile(r, c);
+          this.grid[r][c] = tile;
+          created.push({ row: r, col: c, color: tile.color });
+        }
       }
     }
+
+    return { moved, created, superTile };
   }
-
-  return { moved, created, superTile };
-}
-
-
 
   private randomSuperType(): SuperType {
     const types = [SuperType.Row, SuperType.Column, SuperType.Radius, SuperType.Full];
@@ -127,32 +150,6 @@ removeGroup(group: TileModel[]): {
       if (r <= sum) return types[i];
     }
     return SuperType.Row;
-  }
-
-  private applyGravity() {
-    for (let c = 0; c < this.cols; c++) {
-      let pointer = this.rows - 1;
-      for (let r = this.rows - 1; r >= 0; r--) {
-        if (this.grid[r][c]) {
-          this.grid[pointer][c] = this.grid[r][c];
-          this.grid[pointer][c].row = pointer;
-          pointer--;
-        }
-      }
-      for (let r = pointer; r >= 0; r--) {
-        this.grid[r][c] = null!;
-      }
-    }
-  }
-
-  private fillNewTiles() {
-    for (let c = 0; c < this.cols; c++) {
-      for (let r = 0; r < this.rows; r++) {
-        if (!this.grid[r][c]) {
-          this.grid[r][c] = this.createTile(r, c);
-        }
-      }
-    }
   }
 
   hasMoves(): boolean {
@@ -169,6 +166,14 @@ removeGroup(group: TileModel[]): {
     for (let i = flat.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [flat[i].color, flat[j].color] = [flat[j].color, flat[i].color];
+    }
+    // Обновить row/col у всех!
+    for (let idx = 0; idx < flat.length; idx++) {
+      const r = Math.floor(idx / this.cols);
+      const c = idx % this.cols;
+      flat[idx].row = r;
+      flat[idx].col = c;
+      this.grid[r][c] = flat[idx];
     }
   }
 }

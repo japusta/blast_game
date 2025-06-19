@@ -1,6 +1,6 @@
 // assets/scripts/views/TileView.ts
 
-import { TileModel } from '../models/TileModel';
+import { TileModel, SuperType } from '../models/TileModel';
 
 const { ccclass, property } = cc._decorator;
 
@@ -12,12 +12,21 @@ export default class TileView extends cc.Component {
   @property([cc.SpriteFrame])
   frames: cc.SpriteFrame[] = [];
 
+  @property({ type: cc.SpriteFrame })
+  superRowFrame: cc.SpriteFrame = null;
+
+  @property({ type: cc.SpriteFrame })
+  superColumnFrame: cc.SpriteFrame = null;
+
+  @property({ type: cc.SpriteFrame })
+  superRadiusFrame: cc.SpriteFrame = null;
+
+  @property({ type: cc.SpriteFrame })
+  superFullFrame: cc.SpriteFrame = null;
+
   private model!: TileModel;
   private clickCallback!: (r: number, c: number) => void;
 
-  /**
-   * Инициализируется из GameController.renderGrid
-   */
   init(tile: TileModel, cb: (r: number, c: number) => void) {
     this.model = tile;
     this.clickCallback = cb;
@@ -26,11 +35,31 @@ export default class TileView extends cc.Component {
   }
 
   private updateView() {
-    // Ставим спрайт по цвету
-    this.sprite.spriteFrame = this.frames[this.model.color];
-    // Если супер-тайл — чуть увеличим
-    const s = this.model.isSuper ? 1.2 : 1;
-    this.node.setScale(s, s, s);
+    if (this.model.isSuper) {
+      this.sprite.spriteFrame = this.getSuperSpriteFrame(this.model.superType);
+      cc.tween(this.node)
+        .set({ scale: 0 })
+        .to(0.3, { scale: 1.2 }, { easing: cc.easing.backOut })
+        .start();
+    } else {
+      this.sprite.spriteFrame = this.frames[this.model.color];
+      this.node.setScale(1, 1, 1);
+    }
+  }
+
+  private getSuperSpriteFrame(type: SuperType): cc.SpriteFrame {
+    switch (type) {
+      case SuperType.Row:
+        return this.superRowFrame;
+      case SuperType.Column:
+        return this.superColumnFrame;
+      case SuperType.Radius:
+        return this.superRadiusFrame;
+      case SuperType.Full:
+        return this.superFullFrame;
+      default:
+        return this.frames[this.model.color];
+    }
   }
 
   private onTouchEnd() {

@@ -15,13 +15,16 @@ export enum SuperType {
 }
 
 export class TileModel {
-    public static readonly ColorCount: number = 5; 
+  public static readonly ColorCount: number = 5;
 
   constructor(
     public row: number,
     public col: number,
     public color: TileColor,
-    public isSuper: boolean = false,
     public superType: SuperType = SuperType.None
   ) {}
+
+  get isSuper(): boolean {
+    return this.superType !== SuperType.None;
+  }
 }

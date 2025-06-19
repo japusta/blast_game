@@ -4,9 +4,8 @@ export class BoardModel {
   grid: TileModel[][] = [];
   rows: number;
   cols: number;
-  superThreshold = 5;
+  superThreshold = 111;
 
-  // Явный список цветов, чтобы не использовать Object.values
   private allColors = [
     TileColor.Red,
     TileColor.Green,
@@ -36,6 +35,7 @@ export class BoardModel {
   }
 
   findGroup(start: TileModel): TileModel[] {
+    if (!start) return [];
     const visited = new Set<string>();
     const result: TileModel[] = [];
     const stack = [start];
@@ -59,30 +59,71 @@ export class BoardModel {
     return result;
   }
 
-  /**
-   * Удаляет группу, создаёт супер-тайл если нужно,
-   * делает гравитацию и заполнение сверху.
-   * Возвращает созданный супер-тайл или null.
-   */
-  removeGroup(group: TileModel[]): TileModel | null {
-    // Удаляем
-    group.forEach(t => this.grid[t.row][t.col] = null!);
+removeGroup(group: TileModel[]): {
+  moved: { from: { r: number, c: number }, to: { r: number, c: number } }[],
+  created: { row: number, col: number, color: number }[],
+  superTile: TileModel | null
+} {
+  // Удаляем
+  group.forEach(t => this.grid[t.row][t.col] = null!);
 
-    // Создаём супер-тайл, если группа большая
-    let superTile: TileModel | null = null;
-    if (group.length >= this.superThreshold) {
-      const base = group[0];
-      const st = new TileModel(base.row, base.col, base.color, true);
-      // выбираем тип циклически
-      const types = [SuperType.Row, SuperType.Column, SuperType.Radius, SuperType.Full];
-      st.superType = types[group.length % types.length];
-      this.grid[base.row][base.col] = st;
-      superTile = st;
+  let superTile: TileModel | null = null;
+  if (group.length >= this.superThreshold) {
+    const base = group[0];
+    const superType = this.randomSuperType();
+    superTile = new TileModel(base.row, base.col, base.color, superType);
+    this.grid[base.row][base.col] = superTile;
+  }
+
+  const moved: { from: { r: number, c: number }, to: { r: number, c: number } }[] = [];
+
+  // applyGravity с трекингом перемещений
+  for (let c = 0; c < this.cols; c++) {
+    let pointer = this.rows - 1;
+    for (let r = this.rows - 1; r >= 0; r--) {
+      const tile = this.grid[r][c];
+      if (tile) {
+        if (pointer !== r) {
+          moved.push({ from: { r, c }, to: { r: pointer, c } });
+          tile.row = pointer;
+        }
+        this.grid[pointer][c] = tile;
+        pointer--;
+      }
     }
+    for (let r = pointer; r >= 0; r--) {
+      this.grid[r][c] = null!;
+    }
+  }
 
-    this.applyGravity();
-    this.fillNewTiles();
-    return superTile;
+  const created: { row: number, col: number, color: number }[] = [];
+
+  // fillNewTiles с трекингом созданных
+  for (let c = 0; c < this.cols; c++) {
+    for (let r = 0; r < this.rows; r++) {
+      if (!this.grid[r][c]) {
+        const color = this.allColors[Math.floor(Math.random() * this.allColors.length)];
+        const tile = new TileModel(r, c, color);
+        this.grid[r][c] = tile;
+        created.push({ row: r, col: c, color });
+      }
+    }
+  }
+
+  return { moved, created, superTile };
+}
+
+
+
+  private randomSuperType(): SuperType {
+    const types = [SuperType.Row, SuperType.Column, SuperType.Radius, SuperType.Full];
+    const weights = [0.3, 0.3, 0.25, 0.15];
+    let sum = 0, r = Math.random();
+    for (let i = 0; i < types.length; i++) {
+      sum += weights[i];
+      if (r <= sum) return types[i];
+    }
+    return SuperType.Row;
   }
 
   private applyGravity() {
@@ -121,12 +162,10 @@ export class BoardModel {
   }
 
   shuffle() {
-    // вместо flat() – через reduce+concat
     const flat = this.grid.reduce((acc, row) => acc.concat(row), [] as TileModel[]);
     for (let i = flat.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [flat[i].color, flat[j].color] = [flat[j].color, flat[i].color];
     }
-    // цвета поменялись «по ссылкам»
   }
 }

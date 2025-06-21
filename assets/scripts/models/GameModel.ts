@@ -122,8 +122,7 @@ export class GameModel {
     for (const t of toRemove) {
       this.board.grid[t.row][t.col] = null as any;
     }
-    console.log('GRID_AFTER_REMOVE:', this.board.grid.map(row => row.map(t => t ? t.color : null)));
-
+    
 
     this.score += this.calcPoints(toRemove.length);
     this.movesLeft -= 1;

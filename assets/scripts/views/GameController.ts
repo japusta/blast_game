@@ -35,8 +35,8 @@ export default class GameController extends cc.Component {
   private useBooster: string | null = null;
   private teleportFrom: [number, number] | null = null;
 
-  private readonly tileSize = 90;
-  private readonly tileGap = 8;
+  private readonly tileSize = 130;
+  private readonly tileGap = 2;
 
   onLoad() {
     // 1) Скрываем все попапы
@@ -73,7 +73,7 @@ export default class GameController extends cc.Component {
 
   start() {
     // Первый запуск — дефолтные параметры
-    this._restartGame(8, 8, 20, 500);
+    this._restartGame(10, 10, 20, 500);
   }
 
   /** Общий метод (пере)старта */
@@ -99,7 +99,7 @@ export default class GameController extends cc.Component {
 
   /** Дефолтный рестарт (из Win/Lose) */
   private onRestartDefault() {
-    this._restartGame(8, 8, 20, 500);
+    this._restartGame(10, 10, 20, 500);
   }
 
   /** Показать форму кастомных настроек */
@@ -114,11 +114,38 @@ export default class GameController extends cc.Component {
   }
 
   /** Перезапустить с кастомными параметрами */
-  private onRestartCustom() {
-    const m = parseInt(this.movesInput.string) || 20;
-    const s = parseInt(this.scoreInput.string) || 500;
-    this._restartGame(8, 8, m, s);
+private onRestartCustom() {
+  const movesStr = this.movesInput.string.trim();
+  const scoreStr = this.scoreInput.string.trim();
+
+  let moves = parseInt(movesStr, 10);
+  let score = parseInt(scoreStr, 10);
+
+  // Жёсткая валидация
+  if (
+    isNaN(moves) ||
+    isNaN(score) ||
+    moves < 1 ||
+    moves > 999 ||         // свои лимиты!
+    score < 10 ||
+    score > 100000
+  ) {
+    // Можно показать popup, label или alert
+    cc.log("Неверные параметры! Ходы: 1-99, Очки: 10-100000");
+    // Например, выделить input красным:
+    this.movesInput.node.color = cc.Color.RED;
+    this.scoreInput.node.color = cc.Color.RED;
+    // Или popup (если хочешь)
+    return;
   }
+
+  // Восстанавливаем нормальный цвет
+  this.movesInput.node.color = cc.Color.WHITE;
+  this.scoreInput.node.color = cc.Color.WHITE;
+
+  this._restartGame(10, 10, moves, score);
+}
+
 
   /** Базовый render (без анимаций) */
   private renderGrid() {

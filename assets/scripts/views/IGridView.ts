@@ -9,6 +9,7 @@ export interface IGridView {
     model: import("../models/GameModel").GameModel,
     onClick: (r: number, c: number) => void,
     clickRow?: number,
-    clickCol?: number
+    clickCol?: number,
+    boosterUsed?: import("../models/BoosterType").BoosterType | null
   ): Promise<void>;
 }

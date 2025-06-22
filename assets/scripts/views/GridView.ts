@@ -1,6 +1,7 @@
 import { GameModel } from "../models/GameModel";
 import { ClickResult } from "../models/ClickResult";
 import { TileModel, SuperType } from "../models/TileModel";
+import { BoosterType } from "../models/BoosterType";
 import { IGridView } from "./IGridView";
 
 export class GridView implements IGridView {
@@ -10,6 +11,31 @@ export class GridView implements IGridView {
     private tileSize: number,
     private tileGap: number
   ) {}
+
+  private spawnTrail(source: cc.Node, prefab?: cc.Prefab) {
+    if (!prefab) return;
+    const trail = cc.instantiate(prefab);
+    trail.setPosition(source.getPosition());
+    this.gridNode.addChild(trail);
+    cc.tween(trail)
+      .to(0.4, { opacity: 0, scale: 0.5 }, { easing: cc.easing.quadOut })
+      .call(() => trail.destroy())
+      .start();
+  }
+
+  private spawnExplosion(target: cc.Node, tv?: any) {
+    if (!tv || !tv.explosionPrefab) return;
+    const pos2d = target
+      .getPosition()
+      .add(new cc.Vec2(tv.explosionOffset.x, tv.explosionOffset.y));
+    const exp = cc.instantiate(tv.explosionPrefab);
+    exp.setPosition(pos2d.x, pos2d.y);
+    this.gridNode.addChild(exp);
+    cc.tween(exp)
+      .to(0.5, { opacity: 0 })
+      .call(() => exp.destroy())
+      .start();
+  }
 
   render(model: GameModel, onClick: (r: number, c: number) => void): void {
     this.gridNode.removeAllChildren();
@@ -51,7 +77,8 @@ export class GridView implements IGridView {
     model: GameModel,
     onClick: (r: number, c: number) => void,
     clickRow?: number,
-    clickCol?: number
+    clickCol?: number,
+    boosterUsed?: import("../models/BoosterType").BoosterType | null
   ): Promise<void> {
     const trigger = result.triggerType;
     const effectPromises: Promise<void>[] = [];
@@ -83,8 +110,9 @@ export class GridView implements IGridView {
               if (n) {
                 effectPromises.push(
                   new Promise<void>((res) => {
-                    cc.tween(n)
+                  cc.tween(n)
                       .delay(Math.abs(col - clickCol) * step)
+                      .call(() => this.spawnExplosion(n, n.getComponent('TileView')))
                       .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
                       .call(() => {
                         n.destroy();
@@ -101,6 +129,8 @@ export class GridView implements IGridView {
               cc.tween(left)
                 .to(0.3, {
                   position: this.toPosition(model, 0, clickRow).add(new cc.Vec3(tv.rocketRowOffset.x, tv.rocketRowOffset.y, 0)),
+                }, {
+                  onUpdate: () => this.spawnTrail(left, tv.rocketTrailPrefab),
                 })
                 .call(() => {
                   left.destroy();
@@ -114,6 +144,8 @@ export class GridView implements IGridView {
               cc.tween(right)
                 .to(0.3, {
                   position: this.toPosition(model, model.board.cols - 1, clickRow).add(new cc.Vec3(tv.rocketRowOffset.x, tv.rocketRowOffset.y, 0)),
+                }, {
+                  onUpdate: () => this.spawnTrail(right, tv.rocketTrailPrefab),
                 })
                 .call(() => {
                   right.destroy();
@@ -140,8 +172,9 @@ export class GridView implements IGridView {
               if (n) {
                 effectPromises.push(
                   new Promise<void>((res) => {
-                    cc.tween(n)
+                  cc.tween(n)
                       .delay(Math.abs(row - clickRow) * step)
+                      .call(() => this.spawnExplosion(n, n.getComponent('TileView')))
                       .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
                       .call(() => {
                         n.destroy();
@@ -158,6 +191,8 @@ export class GridView implements IGridView {
               cc.tween(up)
                 .to(0.3, {
                   position: this.toPosition(model, clickCol, 0).add(new cc.Vec3(tv.rocketColumnOffset.x, tv.rocketColumnOffset.y, 0)),
+                }, {
+                  onUpdate: () => this.spawnTrail(up, tv.rocketTrailPrefab),
                 })
                 .call(() => {
                   up.destroy();
@@ -171,6 +206,8 @@ export class GridView implements IGridView {
               cc.tween(down)
                 .to(0.3, {
                   position: this.toPosition(model, clickCol, model.board.rows - 1).add(new cc.Vec3(tv.rocketColumnOffset.x, tv.rocketColumnOffset.y, 0)),
+                }, {
+                  onUpdate: () => this.spawnTrail(down, tv.rocketTrailPrefab),
                 })
                 .call(() => {
                   down.destroy();
@@ -179,7 +216,7 @@ export class GridView implements IGridView {
                 .start();
             }),
           );
-        } else if (trigger === SuperType.Radius && tv.explosionPrefab) {
+        } else if ((trigger === SuperType.Radius || trigger === SuperType.Full) && tv.explosionPrefab) {
           startPos.x += tv.explosionOffset.x;
           startPos.y += tv.explosionOffset.y;
           const exp = cc.instantiate(tv.explosionPrefab);
@@ -221,6 +258,11 @@ export class GridView implements IGridView {
         if (!n) return Promise.resolve();
         return new Promise<void>((resolve) => {
           cc.tween(n)
+            .call(() => {
+              if (boosterUsed === BoosterType.Bomb || trigger != null) {
+                this.spawnExplosion(n, n.getComponent('TileView'));
+              }
+            })
             .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
             .call(() => {
               n.destroy();

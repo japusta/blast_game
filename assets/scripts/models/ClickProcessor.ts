@@ -1,5 +1,5 @@
 import { BoardModel } from "./BoardModel";
-import { BoosterType } from "./Boosters";
+import { BoosterType } from "./BoosterType";
 import { IBooster } from "./IBooster";
 import { SuperHandlerFactory } from "./SuperHandlers";
 import { TileModel } from "./TileModel";

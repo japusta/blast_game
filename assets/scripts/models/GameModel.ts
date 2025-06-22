@@ -1,6 +1,6 @@
 import { BoardModel } from "./BoardModel";
 import { IBooster } from "./IBooster";
-import { BoosterType } from "./Boosters";
+import { BoosterType } from "./BoosterType";
 import { ClickResult } from "./ClickResult";
 import { IClickProcessor } from "./IClickProcessor";
 

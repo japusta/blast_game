@@ -4,10 +4,6 @@ import { TileModel } from "./TileModel";
 import { BoardModel } from "./BoardModel";
 import { IBooster } from "./IBooster";
 
-export enum BoosterType {
-  Bomb = "bomb",
-  Teleport = "teleport",
-}
 
 // interface moved to IBooster.ts
 

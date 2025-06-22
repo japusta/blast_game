@@ -148,6 +148,33 @@
     "superFullFrame": {
       "__uuid__": "c3cde521-3fb3-44f0-bdfe-2b388fd94527"
     },
+    "rocketRowPrefab": {
+      "__uuid__": "57ecbf0b-8730-4373-8cab-4b3f70455f74"
+    },
+    "rocketColumnPrefab": {
+      "__uuid__": "08ef88ba-bffc-4fb5-9a33-a5394813f3dc"
+    },
+    "explosionPrefab": {
+      "__uuid__": "cdf2cb01-0230-4e7d-9694-859cffb1aa40"
+    },
+    "rocketTrailPrefab": {
+      "__uuid__": "cbb4fb43-38d2-4bcf-ba6c-aa37db5a6020"
+    },
+    "rocketRowOffset": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0
+    },
+    "rocketColumnOffset": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0
+    },
+    "explosionOffset": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0
+    },
     "_id": ""
   },
   {

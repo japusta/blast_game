@@ -1,5 +1,6 @@
 // assets/scripts/views/UIManager.ts
 
+import { BoosterType } from "../models/BoosterType";
 import { GameModel } from "../models/GameModel";
 
 export class UIManager {
@@ -18,7 +19,7 @@ export class UIManager {
     private countBombLabel: cc.Label,
     private countTeleportLabel: cc.Label,
     private restartGame: (rows: number, cols: number, moves: number, target: number) => void,
-    private onBoosterSelect: (booster: string) => void
+    private onBoosterSelect: (booster: BoosterType) => void
   ) {}
 
   public init() {
@@ -101,11 +102,11 @@ export class UIManager {
   };
 
   private onBombButton = () => {
-    this.onBoosterSelect("bomb");
+    this.onBoosterSelect(BoosterType.Bomb);
   };
 
   private onTeleportButton = () => {
-    this.onBoosterSelect("teleport");
+    this.onBoosterSelect(BoosterType.Teleport);
   };
 }
 

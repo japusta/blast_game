@@ -12,10 +12,10 @@ export class GameFactory {
     const bomb = new BombBooster(1);
     const teleport = new TeleportBooster();
     const superFactory = new SuperHandlerFactory(bomb.blastRadius);
-    const boosters: Map<BoosterType, IBooster> = new Map([
-      [BoosterType.Bomb, bomb],
-      [BoosterType.Teleport, teleport],
-    ]);
+const boosters = new Map<BoosterType, IBooster>([
+  [BoosterType.Bomb, bomb],
+  [BoosterType.Teleport, teleport],
+]);
     const processor = new ClickProcessor(board, boosters, superFactory);
     return new GameModel(board, moves, target, processor, boosters);
   }

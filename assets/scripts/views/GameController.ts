@@ -5,6 +5,8 @@ import { ClickResult } from "../models/ClickResult";
 import { GridView } from "./GridView";
 import { IGridView } from "./IGridView";
 import { GameFactory } from "../models/GameFactory";
+import { BoosterType } from "../models/BoosterType";
+
 import UIManager from "./UIManager";
 const { ccclass, property } = cc._decorator;
 
@@ -38,7 +40,7 @@ export default class GameController extends cc.Component {
   @property(cc.Label) countTeleportLabel!: cc.Label;
   private model!: GameModel;
   private gridView!: IGridView;
-  private useBooster: string | null = null;
+  private useBooster: BoosterType | null = null;
   private teleportFrom: [number, number] | null = null;
   private uiManager!: UIManager;
   private gameFactory: GameFactory = new GameFactory();
@@ -68,7 +70,7 @@ export default class GameController extends cc.Component {
       (r, c, m, t) => this._restartGame(r, c, m, t),
       (booster) => {
         this.useBooster = booster;
-        if (booster === "teleport") this.teleportFrom = null;
+        if (booster === BoosterType.Teleport) this.teleportFrom = null;
         this.uiManager.updateUI(this.model);
       }
     );
@@ -107,7 +109,7 @@ export default class GameController extends cc.Component {
   private async onTileClicked(row: number, col: number) {
     let res: ClickResult;
 
-    if (this.useBooster === "teleport") {
+    if (this.useBooster === BoosterType.Teleport) {
       if (!this.teleportFrom) {
         this.teleportFrom = [row, col];
         this.uiManager.updateUI(this.model);
@@ -115,7 +117,7 @@ export default class GameController extends cc.Component {
       }
 
       const [r1, c1] = this.teleportFrom;
-      res = this.model.click(row, col, "teleport", r1, c1);
+      res = this.model.click(row, col, BoosterType.Teleport, r1, c1);
 
       if (res.moved.length === 0) {
         this.teleportFrom = null;
@@ -133,6 +135,7 @@ export default class GameController extends cc.Component {
     }
 
     res = this.model.click(row, col, this.useBooster);
+
     this.useBooster = null;
     this.teleportFrom = null;
 

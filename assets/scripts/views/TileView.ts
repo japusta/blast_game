@@ -24,6 +24,15 @@ export default class TileView extends cc.Component {
   @property({ type: cc.SpriteFrame })
   superFullFrame: cc.SpriteFrame = null;
 
+  @property(cc.Prefab)
+  rocketRowPrefab: cc.Prefab = null;
+
+  @property(cc.Prefab)
+  rocketColumnPrefab: cc.Prefab = null;
+
+  @property(cc.Prefab)
+  explosionPrefab: cc.Prefab = null;
+
   private model!: TileModel;
   private clickCallback!: (r: number, c: number) => void;
 

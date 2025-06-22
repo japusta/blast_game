@@ -7,6 +7,8 @@ export interface IGridView {
   animateResult(
     result: import("../models/ClickResult").ClickResult,
     model: import("../models/GameModel").GameModel,
-    onClick: (r: number, c: number) => void
+    onClick: (r: number, c: number) => void,
+    clickRow?: number,
+    clickCol?: number
   ): Promise<void>;
 }

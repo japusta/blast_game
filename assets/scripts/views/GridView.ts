@@ -1,6 +1,6 @@
 import { GameModel } from "../models/GameModel";
 import { ClickResult } from "../models/ClickResult";
-import { TileModel } from "../models/TileModel";
+import { TileModel, SuperType } from "../models/TileModel";
 import { IGridView } from "./IGridView";
 
 export class GridView implements IGridView {
@@ -46,7 +46,93 @@ export class GridView implements IGridView {
     );
   }
 
-  async animateResult(result: ClickResult, model: GameModel, onClick: (r: number, c: number) => void): Promise<void> {
+  async animateResult(
+    result: ClickResult,
+    model: GameModel,
+    onClick: (r: number, c: number) => void,
+    clickRow?: number,
+    clickCol?: number
+  ): Promise<void> {
+    const trigger = result.triggerType;
+    if (
+      trigger != null &&
+      clickRow != null &&
+      clickCol != null
+    ) {
+      const startNode = this.gridNode.getChildByName(`tile_${clickRow}_${clickCol}`);
+      const tv = startNode ? (startNode.getComponent('TileView') as any) : null;
+      if (startNode && tv) {
+        const startPos = this.toPosition(model, clickCol, clickRow);
+        if (trigger === SuperType.Row && tv.rocketRowPrefab) {
+          const left = cc.instantiate(tv.rocketRowPrefab);
+          const right = cc.instantiate(tv.rocketRowPrefab);
+          left.setPosition(startPos);
+          right.setPosition(startPos);
+          this.gridNode.addChild(left);
+          this.gridNode.addChild(right);
+          await Promise.all([
+            new Promise<void>((res) => {
+              cc.tween(left)
+                .to(0.3, { position: this.toPosition(model, 0, clickRow) })
+                .call(() => {
+                  left.destroy();
+                  res();
+                })
+                .start();
+            }),
+            new Promise<void>((res) => {
+              cc.tween(right)
+                .to(0.3, { position: this.toPosition(model, model.board.cols - 1, clickRow) })
+                .call(() => {
+                  right.destroy();
+                  res();
+                })
+                .start();
+            }),
+          ]);
+        } else if (trigger === SuperType.Column && tv.rocketColumnPrefab) {
+          const up = cc.instantiate(tv.rocketColumnPrefab);
+          const down = cc.instantiate(tv.rocketColumnPrefab);
+          up.setPosition(startPos);
+          down.setPosition(startPos);
+          this.gridNode.addChild(up);
+          this.gridNode.addChild(down);
+          await Promise.all([
+            new Promise<void>((res) => {
+              cc.tween(up)
+                .to(0.3, { position: this.toPosition(model, clickCol, 0) })
+                .call(() => {
+                  up.destroy();
+                  res();
+                })
+                .start();
+            }),
+            new Promise<void>((res) => {
+              cc.tween(down)
+                .to(0.3, { position: this.toPosition(model, clickCol, model.board.rows - 1) })
+                .call(() => {
+                  down.destroy();
+                  res();
+                })
+                .start();
+            }),
+          ]);
+        } else if (trigger === SuperType.Radius && tv.explosionPrefab) {
+          const exp = cc.instantiate(tv.explosionPrefab);
+          exp.setPosition(startPos);
+          this.gridNode.addChild(exp);
+          await new Promise<void>((res) => {
+            cc.tween(exp)
+              .to(0.5, { opacity: 0 })
+              .call(() => {
+                exp.destroy();
+                res();
+              })
+              .start();
+          });
+        }
+      }
+    }
     if (result.super && result.removed.some(t => t.row === result.super!.row && t.col === result.super!.col)) {
       const { row: sRow, col: sCol } = result.super!;
       const superNode = this.gridNode.getChildByName(`tile_${sRow}_${sCol}`);

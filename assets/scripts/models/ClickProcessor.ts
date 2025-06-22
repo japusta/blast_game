@@ -2,7 +2,7 @@ import { IBoardModel } from "./IBoardModel";
 import { BoosterType } from "./BoosterType";
 import { IBooster } from "./IBooster";
 import { SuperHandlerFactory } from "./SuperHandlers";
-import { TileModel } from "./TileModel";
+import { TileModel, SuperType } from "./TileModel";
 import { ClickResult } from "./ClickResult";
 import { IClickProcessor } from "./IClickProcessor";
 import { ClickOutcome } from "./ClickOutcome";
@@ -27,6 +27,7 @@ export class ClickProcessor implements IClickProcessor {
     c2?: number
   ): ClickOutcome {
     let toRemove: TileModel[] = [];
+    let triggerType: SuperType | null = null;
     const tile = this.board.getTile(row, col);
     if (!tile) {
       return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
@@ -57,6 +58,7 @@ export class ClickProcessor implements IClickProcessor {
       };
     } else {
       if (tile.isSuper) {
+        triggerType = tile.superType;
         toRemove = this.activateSuper(tile).filter((t) => t != null);
       } else {
         toRemove = this.board.findGroup(tile);
@@ -64,7 +66,7 @@ export class ClickProcessor implements IClickProcessor {
     }
 
     if (toRemove.length <= 1) {
-      return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
+      return { result: { removed: [], moved: [], created: [], super: null, triggerType }, scoreDelta: 0, consumeMove: false };
     }
 
     const removed = toRemove
@@ -78,7 +80,7 @@ export class ClickProcessor implements IClickProcessor {
     const superInfo = superTile ? { row: superTile.row, col: superTile.col, type: superTile.superType } : null;
 
     return {
-      result: { removed, moved, created, super: superInfo },
+      result: { removed, moved, created, super: superInfo, triggerType },
       scoreDelta,
       consumeMove: true,
     };

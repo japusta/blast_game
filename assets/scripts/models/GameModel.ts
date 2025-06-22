@@ -1,8 +1,7 @@
 import { BoardModel } from "./BoardModel";
-import { BombBooster, TeleportBooster } from "./Boosters";
-import { SuperHandlerFactory } from "./SuperHandlers";
+import { IBooster } from "./IBooster";
 import { ClickResult } from "./ClickResult";
-import { ClickProcessor } from "./ClickProcessor";
+import { IClickProcessor } from "./IClickProcessor";
 
 export class GameModel {
   board: BoardModel;
@@ -12,22 +11,24 @@ export class GameModel {
   shuffleCount = 0;
   maxShuffles = 3;
 
-  bomb = new BombBooster(1);
-  teleport = new TeleportBooster();
-  private superFactory: SuperHandlerFactory;
-  private clickProcessor: ClickProcessor;
+  public readonly bomb: IBooster;
+  public readonly teleport: IBooster;
+  private clickProcessor: IClickProcessor;
 
-  constructor(rows: number, cols: number, moves: number, target: number) {
-    this.board = new BoardModel(rows, cols);
+  constructor(
+    board: BoardModel,
+    moves: number,
+    target: number,
+    clickProcessor: IClickProcessor,
+    bomb: IBooster,
+    teleport: IBooster
+  ) {
+    this.board = board;
     this.movesLeft = moves;
     this.targetScore = target;
-    this.superFactory = new SuperHandlerFactory(this.bomb.blastRadius);
-    this.clickProcessor = new ClickProcessor(
-      this.board,
-      this.bomb,
-      this.teleport,
-      this.superFactory
-    );
+    this.clickProcessor = clickProcessor;
+    this.bomb = bomb;
+    this.teleport = teleport;
   }
 
   public get bombCount(): number {

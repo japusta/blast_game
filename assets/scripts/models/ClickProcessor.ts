@@ -3,6 +3,7 @@ import { BombBooster, TeleportBooster } from "./Boosters";
 import { SuperHandlerFactory } from "./SuperHandlers";
 import { TileModel } from "./TileModel";
 import { ClickResult } from "./ClickResult";
+import { IClickProcessor } from "./IClickProcessor";
 
 export interface ClickOutcome {
   result: ClickResult;
@@ -10,7 +11,7 @@ export interface ClickOutcome {
   consumeMove: boolean;
 }
 
-export class ClickProcessor {
+export class ClickProcessor implements IClickProcessor {
   constructor(
     private board: BoardModel,
     private bomb: BombBooster,

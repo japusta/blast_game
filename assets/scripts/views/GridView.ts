@@ -81,13 +81,26 @@ export class GridView implements IGridView {
     boosterUsed?: import("../models/BoosterType").BoosterType | null
   ): Promise<void> {
     const trigger = result.triggerType;
+    const delayedRemoved = await this.playTriggerEffects(trigger, result, model, clickRow, clickCol);
+    await this.animateSuperTileRemoval(result);
+    await this.animateRemovedTiles(result, delayedRemoved, boosterUsed, trigger);
+    await this.animateMovedTiles(result, model);
+    await this.animateCreatedTiles(result, model, onClick);
+
+    this.render(model, onClick);
+  }
+
+  private async playTriggerEffects(
+    trigger: SuperType | null,
+    result: ClickResult,
+    model: GameModel,
+    clickRow?: number,
+    clickCol?: number
+  ): Promise<Set<string>> {
     const effectPromises: Promise<void>[] = [];
     const delayedRemoved = new Set<string>();
-    if (
-      trigger != null &&
-      clickRow != null &&
-      clickCol != null
-    ) {
+
+    if (trigger != null && clickRow != null && clickCol != null) {
       const startNode = this.gridNode.getChildByName(`tile_${clickRow}_${clickCol}`);
       const tv = startNode ? (startNode.getComponent('TileView') as any) : null;
       if (startNode && tv) {
@@ -110,7 +123,7 @@ export class GridView implements IGridView {
               if (n) {
                 effectPromises.push(
                   new Promise<void>((res) => {
-                  cc.tween(n)
+                    cc.tween(n)
                       .delay(Math.abs(col - clickCol) * step)
                       .call(() => this.spawnExplosion(n, n.getComponent('TileView')))
                       .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
@@ -172,7 +185,7 @@ export class GridView implements IGridView {
               if (n) {
                 effectPromises.push(
                   new Promise<void>((res) => {
-                  cc.tween(n)
+                    cc.tween(n)
                       .delay(Math.abs(row - clickRow) * step)
                       .call(() => this.spawnExplosion(n, n.getComponent('TileView')))
                       .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
@@ -233,8 +246,12 @@ export class GridView implements IGridView {
           });
         }
       }
-    await Promise.all(effectPromises);
     }
+    await Promise.all(effectPromises);
+    return delayedRemoved;
+  }
+
+  private async animateSuperTileRemoval(result: ClickResult) {
     if (result.super && result.removed.some(t => t.row === result.super!.row && t.col === result.super!.col)) {
       const { row: sRow, col: sCol } = result.super!;
       const superNode = this.gridNode.getChildByName(`tile_${sRow}_${sCol}`);
@@ -250,7 +267,14 @@ export class GridView implements IGridView {
         });
       }
     }
+  }
 
+  private async animateRemovedTiles(
+    result: ClickResult,
+    delayedRemoved: Set<string>,
+    boosterUsed: BoosterType | null,
+    trigger: SuperType | null
+  ) {
     await Promise.all(
       result.removed.map(({ row, col }) => {
         if (delayedRemoved.has(`${row}_${col}`)) return Promise.resolve();
@@ -272,7 +296,9 @@ export class GridView implements IGridView {
         });
       })
     );
+  }
 
+  private async animateMovedTiles(result: ClickResult, model: GameModel) {
     await Promise.all(
       result.moved.map(mv => {
         const node = this.gridNode.getChildByName(`tile_${mv.from.r}_${mv.from.c}`);
@@ -290,7 +316,13 @@ export class GridView implements IGridView {
         });
       })
     );
+  }
 
+  private async animateCreatedTiles(
+    result: ClickResult,
+    model: GameModel,
+    onClick: (r: number, c: number) => void
+  ) {
     await Promise.all(
       result.created.map(cr => {
         const n = cc.instantiate(this.tilePrefab);
@@ -308,8 +340,6 @@ export class GridView implements IGridView {
         });
       })
     );
-
-    this.render(model, onClick);
   }
 
   private toPosition(model: GameModel, col: number, row: number): cc.Vec3 {

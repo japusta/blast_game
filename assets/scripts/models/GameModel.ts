@@ -58,13 +58,13 @@ export class GameModel {
     }
 
     if (this.score >= this.targetScore) {
-      // handle win state
+      // вин стейт
     } else if (!this.board.hasMoves()) {
       if (this.shuffleCount < this.maxShuffles) {
         this.board.shuffle();
         this.shuffleCount++;
       } else {
-        // handle lose state
+        // луз стейт
       }
     }
 

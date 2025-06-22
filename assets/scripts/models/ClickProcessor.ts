@@ -34,37 +34,14 @@ export class ClickProcessor implements IClickProcessor {
       return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
     }
 
+    if (useBooster === BoosterType.Teleport && r2 != null && c2 != null) {
+      return this.handleTeleport(row, col, r2, c2);
+    }
+
     if (useBooster === BoosterType.Bomb) {
-      toRemove = this.bomb.use(this.board, row, col);
-      this.bomb.decrement();
-    } else if (useBooster === BoosterType.Teleport && r2 != null && c2 != null) {
-      const isAdjacent =
-        (row === r2 && Math.abs(col - c2) === 1) ||
-        (col === c2 && Math.abs(row - r2) === 1);
-
-      if (!isAdjacent) {
-        return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
-      }
-
-      this.teleport.use(this.board, row, col, r2, c2);
-      this.teleport.decrement();
-      const moved = [
-        { from: { r: row, c: col }, to: { r: r2, c: c2 } },
-        { from: { r: r2, c: c2 }, to: { r: row, c: col } },
-      ];
-      return {
-        result: { removed: [], moved, created: [], super: null },
-        scoreDelta: 0,
-        consumeMove: true,
-      };
+      toRemove = this.handleBomb(row, col);
     } else {
-      if (tile.isSuper) {
-        triggerType = tile.superType;
-
-        toRemove = this.activateSuper(tile).filter((t) => t != null);
-      } else {
-        toRemove = this.board.findGroup(tile);
-      }
+      ({ tiles: toRemove, trigger: triggerType } = this.collectTiles(tile));
     }
 
     if (toRemove.length <= 1) {
@@ -86,6 +63,41 @@ export class ClickProcessor implements IClickProcessor {
       scoreDelta,
       consumeMove: true,
     };
+  }
+
+  private handleTeleport(row: number, col: number, r2: number, c2: number): ClickOutcome {
+    const isAdjacent =
+      (row === r2 && Math.abs(col - c2) === 1) ||
+      (col === c2 && Math.abs(row - r2) === 1);
+
+    if (!isAdjacent) {
+      return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
+    }
+
+    this.teleport.use(this.board, row, col, r2, c2);
+    this.teleport.decrement();
+    const moved = [
+      { from: { r: row, c: col }, to: { r: r2, c: c2 } },
+      { from: { r: r2, c: c2 }, to: { r: row, c: col } },
+    ];
+    return {
+      result: { removed: [], moved, created: [], super: null },
+      scoreDelta: 0,
+      consumeMove: true,
+    };
+  }
+
+  private handleBomb(row: number, col: number): TileModel[] {
+    const tiles = this.bomb.use(this.board, row, col);
+    this.bomb.decrement();
+    return tiles;
+  }
+
+  private collectTiles(tile: TileModel): { tiles: TileModel[]; trigger: SuperType | null } {
+    if (tile.isSuper) {
+      return { tiles: this.activateSuper(tile).filter((t) => t != null), trigger: tile.superType };
+    }
+    return { tiles: this.board.findGroup(tile), trigger: null };
   }
 
   private activateSuper(tile: TileModel): TileModel[] {

@@ -1,5 +1,3 @@
-// assets/scripts/views/UIManager.ts
-
 import { BoosterType } from "../models/BoosterType";
 import { GameModel } from "../models/GameModel";
 

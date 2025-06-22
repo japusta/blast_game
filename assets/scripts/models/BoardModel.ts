@@ -89,7 +89,7 @@ export class BoardModel implements IBoardModel {
   // Генерация нового тайла с защитой от авто-групп
   private createTile(r: number, c: number): TileModel {
     const forbiddenColors = new Set<number>();
-    // Запрет на три в ряд по горизонтали
+    // хапрет на три в ряд по горизонтали
     if (c >= 2) {
       const left1 = this._grid[r][c - 1];
       const left2 = this._grid[r][c - 2];
@@ -97,7 +97,7 @@ export class BoardModel implements IBoardModel {
         forbiddenColors.add(left1.color);
       }
     }
-    // Запрет на три в ряд по вертикали
+    // запрет на три в ряд по вертикали
     if (r >= 2) {
       const down1 = this._grid[r - 1][c];
       const down2 = this._grid[r - 2][c];
@@ -110,7 +110,7 @@ export class BoardModel implements IBoardModel {
     return new TileModel(r, c, color);
   }
 
-  // Flood-fill по сторонам для поиска всей группы
+  // для поиска по сторонам всей группы
   findGroup(start: TileModel): TileModel[] {
     if (!start) return [];
     const visited = new Set<string>();
@@ -138,7 +138,7 @@ export class BoardModel implements IBoardModel {
     return result;
   }
 
-  // Удаляет группу, делает падение и заполняет новые тайлы
+  // удаляем группу делает падение и заполняет новые тайлы
   removeGroup(
     group: TileModel[],
     createSuper: boolean = true
@@ -147,24 +147,34 @@ export class BoardModel implements IBoardModel {
     created: { row: number, col: number, color: number }[],
     superTile: TileModel | null
   } {
-    // Удаляем группу
+    this.removeTiles(group);
+
+    let superTile: TileModel | null = null;
+    if (createSuper && group.length >= this.superThreshold) {
+      superTile = this.insertSuperTile(group[0]);
+    }
+
+    const moved = this.dropTiles();
+    const created = this.fillEmpty();
+
+    return { moved, created, superTile };
+  }
+
+  private removeTiles(group: TileModel[]) {
     for (const t of group) {
       this._grid[t.row][t.col] = null!;
     }
+  }
 
-    let superTile: TileModel | null = null;
-    // Если нужна вставка супертайла
-    if (createSuper && group.length >= this.superThreshold) {
-      // Берём первый тайл группы как базу
-      const base = group[0];
-      const superType = this.randomSuperType();
-      superTile = new TileModel(base.row, base.col, base.color, superType);
-      this._grid[base.row][base.col] = superTile;
-    }
+  private insertSuperTile(base: TileModel): TileModel {
+    const superType = this.randomSuperType();
+    const superTile = new TileModel(base.row, base.col, base.color, superType);
+    this._grid[base.row][base.col] = superTile;
+    return superTile;
+  }
 
-    const moved: { from: { r: number, c: number }, to: { r: number, c: number } }[] = [];
-
-    // ПАДЕНИЕ — всегда сверху вниз!
+  private dropTiles(): { from: { r: number; c: number }; to: { r: number; c: number } }[] {
+    const moved: { from: { r: number; c: number }; to: { r: number; c: number } }[] = [];
     for (let c = 0; c < this.cols; c++) {
       let pointer = this.rows - 1;
       for (let r = this.rows - 1; r >= 0; r--) {
@@ -179,14 +189,15 @@ export class BoardModel implements IBoardModel {
           pointer--;
         }
       }
-      // Очищаем всё выше pointer
       for (let r = pointer; r >= 0; r--) {
         this._grid[r][c] = null!;
       }
     }
+    return moved;
+  }
 
-    const created: { row: number, col: number, color: number }[] = [];
-    // ЗАПОЛНЯЕМ пустоты
+  private fillEmpty(): { row: number; col: number; color: number }[] {
+    const created: { row: number; col: number; color: number }[] = [];
     for (let c = 0; c < this.cols; c++) {
       for (let r = 0; r < this.rows; r++) {
         if (!this._grid[r][c]) {
@@ -196,8 +207,7 @@ export class BoardModel implements IBoardModel {
         }
       }
     }
-
-    return { moved, created, superTile };
+    return created;
   }
 
   private randomSuperType(): SuperType {
@@ -230,7 +240,7 @@ export class BoardModel implements IBoardModel {
       const j = Math.floor(Math.random() * (i + 1));
       [flat[i].color, flat[j].color] = [flat[j].color, flat[i].color];
     }
-    // Обновить row/col у всех!
+    // Обновить row/col у всех
     for (let idx = 0; idx < flat.length; idx++) {
       const r = Math.floor(idx / this.cols);
       const c = idx % this.cols;

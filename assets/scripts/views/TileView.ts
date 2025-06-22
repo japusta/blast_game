@@ -1,5 +1,3 @@
-// assets/scripts/views/TileView.ts
-
 import { TileModel, SuperType } from '../models/TileModel';
 
 const { ccclass, property } = cc._decorator;

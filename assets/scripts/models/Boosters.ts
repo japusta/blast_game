@@ -1,17 +1,12 @@
-// assets/scripts/models/Boosters.ts
-
 import { TileModel } from "./TileModel";
 import { IBoardModel } from "./IBoardModel";
 import { IBooster } from "./IBooster";
-
-
-// interface moved to IBooster.ts
 
 export class BombBooster implements IBooster {
   private _count: number;
 
   /**
-   * @param radius радиус «взрыва» (сотношение Manhattan)
+   * @param radius радиус взрыва
    * @param initialCount сколько раз можно использовать бомбу
    */
   constructor(

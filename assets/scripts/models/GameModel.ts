@@ -1,10 +1,10 @@
-import { BoardModel } from "./BoardModel";
+import { IBoardModel } from "./IBoardModel";
 import { IBooster } from "./IBooster";
 import { ClickResult } from "./ClickResult";
 import { IClickProcessor } from "./IClickProcessor";
 
 export class GameModel {
-  board: BoardModel;
+  board: IBoardModel;
   score = 0;
   movesLeft: number;
   targetScore: number;
@@ -16,7 +16,7 @@ export class GameModel {
   private clickProcessor: IClickProcessor;
 
   constructor(
-    board: BoardModel,
+    board: IBoardModel,
     moves: number,
     target: number,
     clickProcessor: IClickProcessor,

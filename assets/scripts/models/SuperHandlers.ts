@@ -1,15 +1,15 @@
-import { BoardModel } from "./BoardModel";
+import { IBoardModel } from "./IBoardModel";
 import { TileModel, SuperType } from "./TileModel";
 import { ISuperHandler } from "./ISuperHandler";
 
 export class RowHandler implements ISuperHandler {
-  collect(board: BoardModel, tile: TileModel): TileModel[] {
+  collect(board: IBoardModel, tile: TileModel): TileModel[] {
     return board.getRow(tile.row);
   }
 }
 
 export class ColumnHandler implements ISuperHandler {
-  collect(board: BoardModel, tile: TileModel): TileModel[] {
+  collect(board: IBoardModel, tile: TileModel): TileModel[] {
     return board.getColumn(tile.col);
   }
 }
@@ -17,13 +17,13 @@ export class ColumnHandler implements ISuperHandler {
 export class RadiusHandler implements ISuperHandler {
   constructor(private radius: number = 1) {}
 
-  collect(board: BoardModel, tile: TileModel): TileModel[] {
+  collect(board: IBoardModel, tile: TileModel): TileModel[] {
     return board.getTilesInRadius(tile.row, tile.col, this.radius);
   }
 }
 
 export class FullHandler implements ISuperHandler {
-  collect(board: BoardModel, tile: TileModel): TileModel[] {
+  collect(board: IBoardModel, tile: TileModel): TileModel[] {
     return board.getAllTiles();
   }
 }

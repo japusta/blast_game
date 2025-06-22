@@ -1,6 +1,6 @@
-import { BoardModel } from "./BoardModel";
+import { IBoardModel } from "./IBoardModel";
 import { TileModel } from "./TileModel";
 
 export interface ISuperHandler {
-  collect(board: BoardModel, tile: TileModel): TileModel[];
+  collect(board: IBoardModel, tile: TileModel): TileModel[];
 }

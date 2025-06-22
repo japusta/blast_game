@@ -4,10 +4,7 @@ import { GameModel } from "../models/GameModel";
 import { ClickResult } from "../models/ClickResult";
 import { GridView } from "./GridView";
 import { IGridView } from "./IGridView";
-import { BoardModel } from "../models/BoardModel";
-import { BombBooster, TeleportBooster } from "../models/Boosters";
-import { SuperHandlerFactory } from "../models/SuperHandlers";
-import { ClickProcessor } from "../models/ClickProcessor";
+import { GameFactory } from "../models/GameFactory";
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -42,9 +39,14 @@ export default class GameController extends cc.Component {
   private gridView!: IGridView;
   private useBooster: string | null = null;
   private teleportFrom: [number, number] | null = null;
+  private gameFactory: GameFactory = new GameFactory();
 
   private readonly tileSize = 130;
   private readonly tileGap = 2;
+
+  public setGameFactory(factory: GameFactory) {
+    this.gameFactory = factory;
+  }
 
   onLoad() {
     // 1) Скрываем все попапы
@@ -97,15 +99,8 @@ export default class GameController extends cc.Component {
     this.losePopup.active = false;
     this.customPopup.active = false;
 
-    // создаём зависимости модели
-    const board = new BoardModel(rows, cols);
-    const bomb = new BombBooster(1);
-    const teleport = new TeleportBooster();
-    const factory = new SuperHandlerFactory(bomb.blastRadius);
-    const processor = new ClickProcessor(board, bomb, teleport, factory);
-
-    // создаём новую модель
-    this.model = new GameModel(board, moves, target, processor, bomb, teleport);
+    // создаём новую модель через фабрику
+    this.model = this.gameFactory.create(rows, cols, moves, target);
     // создаём представление поля
     this.gridView = new GridView(this.gridNode, this.tilePrefab, this.tileSize, this.tileGap);
 

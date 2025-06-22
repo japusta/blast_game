@@ -44,6 +44,10 @@ export class TeleportBooster implements IBooster {
     this._count = initialCount;
   }
 
+  /**
+   * Перемещает два тайла местами. Возвращает пустой массив,
+   * так как при телепортации удаление тайлов не происходит.
+   */
   public use(
     board: IBoardModel,
     r1: number,

@@ -1,8 +1,10 @@
 import { TileModel, TileColor, SuperType } from "./TileModel";
 import { IBoardModel } from "./IBoardModel";
+import { ITileRandomizer, TileRandomizer } from "./TileRandomizer";
 
 export class BoardModel implements IBoardModel {
   private _grid: TileModel[][] = [];
+  private randomizer: ITileRandomizer;
   rows: number;
   cols: number;
   superThreshold = 5;
@@ -70,9 +72,10 @@ export class BoardModel implements IBoardModel {
     TileColor.Purple
   ];
 
-  constructor(rows: number, cols: number) {
+  constructor(rows: number, cols: number, randomizer: ITileRandomizer = new TileRandomizer()) {
     this.rows = rows;
     this.cols = cols;
+    this.randomizer = randomizer;
     this.initGrid();
   }
 
@@ -106,7 +109,7 @@ export class BoardModel implements IBoardModel {
       }
     }
     const availableColors = this.allColors.filter(col => !forbiddenColors.has(col));
-    const color = availableColors[Math.floor(Math.random() * availableColors.length)];
+    const color = this.randomizer.randomColor(availableColors);
     return new TileModel(r, c, color);
   }
 
@@ -211,14 +214,7 @@ export class BoardModel implements IBoardModel {
   }
 
   private randomSuperType(): SuperType {
-    const types = [SuperType.Row, SuperType.Column, SuperType.Radius, SuperType.Full];
-    const weights = [0.3, 0.3, 0.25, 0.15];
-    let sum = 0, r = Math.random();
-    for (let i = 0; i < types.length; i++) {
-      sum += weights[i];
-      if (r <= sum) return types[i];
-    }
-    return SuperType.Row;
+    return this.randomizer.randomSuperType();
   }
 
   public generateSuperType(): SuperType {

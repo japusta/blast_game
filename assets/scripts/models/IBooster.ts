@@ -18,6 +18,10 @@ export interface IBooster {
     targetCol?: number
   ): TileModel[];
 
+  /**
+   * Для некоторых бустеров (например, телепорт) массив может быть пустым.
+   */
+
  
   decrement(): void;
 

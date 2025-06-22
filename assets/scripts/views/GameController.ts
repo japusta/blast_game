@@ -2,6 +2,8 @@
 
 import { GameModel } from "../models/GameModel";
 import { ClickResult } from "../models/ClickResult";
+import { GridView } from "./GridView";
+import { IGridView } from "./IGridView";
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -33,6 +35,7 @@ export default class GameController extends cc.Component {
   @property(cc.Label) countBombLabel!: cc.Label;
   @property(cc.Label) countTeleportLabel!: cc.Label;
   private model!: GameModel;
+  private gridView!: IGridView;
   private useBooster: string | null = null;
   private teleportFrom: [number, number] | null = null;
 
@@ -92,9 +95,11 @@ export default class GameController extends cc.Component {
 
     // создаём новую модель
     this.model = new GameModel(rows, cols, moves, target);
+    // создаём представление поля
+    this.gridView = new GridView(this.gridNode, this.tilePrefab, this.tileSize, this.tileGap);
 
     // рендерим поле и обновляем HUD
-    this.renderGrid();
+    this.gridView.render(this.model, this.onTileClicked.bind(this));
     this.updateUI();
   }
 
@@ -148,22 +153,7 @@ private onRestartCustom() {
 }
 
 
-  /** Базовый render (без анимаций) */
-  private renderGrid() {
-    this.gridNode.removeAllChildren();
-    for (const rowArr of this.model.board.grid) {
-      for (const tile of rowArr) {
-        if (!tile) continue;
-        const node = cc.instantiate(this.tilePrefab);
-        node.name = `tile_${tile.row}_${tile.col}`;
-        node.setPosition(this.toPosition(tile.col, tile.row));
-        node
-          .getComponent("TileView")!
-          .init(tile, this.onTileClicked.bind(this));
-        this.gridNode.addChild(node);
-      }
-    }
-  }
+
 
   /** Обработка клика + анимации + проверка конца */
   private async onTileClicked(row: number, col: number) {
@@ -177,7 +167,6 @@ private onRestartCustom() {
       }
 
       const [r1, c1] = this.teleportFrom;
-
       res = this.model.click(row, col, "teleport", r1, c1);
 
       if (res.moved.length === 0) {
@@ -187,28 +176,8 @@ private onRestartCustom() {
         return;
       }
 
-      // Ждём завершения анимации обмена тайлов перед перерисовкой
-      await Promise.all(
-        res.moved.map((mv) => {
-          const node = this.gridNode.getChildByName(
-            `tile_${mv.from.r}_${mv.from.c}`
-          )!;
-          return new Promise<void>((resolve) => {
-            cc.tween(node)
-              .to(
-                0.2,
-                { position: this.toPosition(mv.to.c, mv.to.r) },
-                { easing: cc.easing.sineInOut }
-              )
-              .call(() => resolve())
-              .start();
-          });
-        })
-      );
-
-      // ⏳⚠️ Сначала полностью ждём анимацию, только затем перерисовываем поле
-      this.renderGrid();
-
+      await this.gridView.animateSwap(res.moved, this.model);
+      this.gridView.render(this.model, this.onTileClicked.bind(this));
       this.teleportFrom = null;
       this.useBooster = null;
       this.updateUI();
@@ -216,95 +185,11 @@ private onRestartCustom() {
     }
 
     res = this.model.click(row, col, this.useBooster);
-
     this.useBooster = null;
     this.teleportFrom = null;
-    this.updateUI();
 
-      // --- 1. МГНОВЕННОЕ ИСЧЕЗНОВЕНИЕ СУПЕРТАЙЛА ---
-  // Если клик был по супертайлу (res.super — координаты активированного)
-  if (res.super && res.removed.some(t => t.row === res.super!.row && t.col === res.super!.col)) {
-    const { row: sRow, col: sCol } = res.super;
-    const superNode = this.gridNode.getChildByName(`tile_${sRow}_${sCol}`);
-    if (superNode) {
-      await new Promise<void>((resolve) => {
-        cc.tween(superNode)
-          .to(0.18, { scale: 0.1, opacity: 0 }, { easing: cc.easing.cubicIn })
-          .call(() => {
-            superNode.destroy();
-            resolve();
-          })
-          .start();
-      });
-    }
-  }
+    await this.gridView.animateResult(res, this.model, this.onTileClicked.bind(this));
 
-    // --- 1. АНИМАЦИЯ УДАЛЕНИЯ ---
-    await Promise.all(
-      res.removed.map(({ row, col }) => {
-        const n = this.gridNode.getChildByName(`tile_${row}_${col}`);
-        if (!n) return Promise.resolve();
-        return new Promise<void>((resolve) => {
-          cc.tween(n)
-            .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
-            .call(() => {
-              n.destroy();
-              resolve();
-            })
-            .start();
-        });
-      })
-    );
-
-    // --- 2. АНИМАЦИЯ ПАДЕНИЯ ---
-    await Promise.all(
-      res.moved.map((mv) => {
-        const node = this.gridNode.getChildByName(
-          `tile_${mv.from.r}_${mv.from.c}`
-        );
-        if (!node) return Promise.resolve();
-        node.name = `tile_${mv.to.r}_${mv.to.c}`;
-        return new Promise<void>((resolve) => {
-          cc.tween(node)
-            .to(
-              0.3,
-              { position: this.toPosition(mv.to.c, mv.to.r) },
-              { easing: cc.easing.quadOut }
-            )
-            .call(() => resolve())
-            .start();
-        });
-      })
-    );
-
-    // --- 3. АНИМАЦИЯ ПОЯВЛЕНИЯ ---
-    await Promise.all(
-      res.created.map((cr) => {
-        const n = cc.instantiate(this.tilePrefab);
-        n.name = `tile_${cr.row}_${cr.col}`;
-        const up = this.toPosition(cr.col, -1);
-        n.setPosition(new cc.Vec3(up.x, up.y + this.tileSize, 0));
-        // ВНИМАНИЕ: теперь обязательно передавать модельку TileModel!
-        const tile = this.model.board.grid[cr.row][cr.col];
-        n.getComponent("TileView")!.init(tile, this.onTileClicked.bind(this));
-        this.gridNode.addChild(n);
-        return new Promise<void>((resolve) => {
-          cc.tween(n)
-            .to(
-              0.3,
-              { position: this.toPosition(cr.col, cr.row) },
-              { easing: cc.easing.backOut }
-            )
-            .call(() => resolve())
-            .start();
-        });
-      })
-    );
-
-    // --- 4. ПОСЛЕ ВСЕХ АНИМАЦИЙ ПОЛНЫЙ ПЕРЕРЕНДЕР ---
-    this.renderGrid();
-
-    // --- 5. UI & ENDGAME ---
     this.updateUI();
     if (this.model.score >= this.model.targetScore) {
       this.showPopup(this.winPopup);
@@ -338,17 +223,6 @@ private onRestartCustom() {
     //   : "Booster: none";
   }
 
-  /** Координаты тайла → Vec3 */
-  private toPosition(col: number, row: number): cc.Vec3 {
-    const step = this.tileSize + this.tileGap;
-    const W = step * this.model.board.cols;
-    const H = step * this.model.board.rows;
-    return new cc.Vec3(
-      col * step - W / 2 + this.tileSize / 2,
-      H / 2 - row * step - this.tileSize / 2,
-      0
-    );
-  }
 
   /** Бомба */
   public onBombButton() {

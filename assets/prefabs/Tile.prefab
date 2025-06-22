@@ -157,6 +157,9 @@
     "explosionPrefab": {
       "__uuid__": "cdf2cb01-0230-4e7d-9694-859cffb1aa40"
     },
+    "rocketTrailPrefab": {
+      "__uuid__": "cbb4fb43-38d2-4bcf-ba6c-aa37db5a6020"
+    },
     "rocketRowOffset": {
       "__type__": "cc.Vec2",
       "x": 0,

@@ -11,7 +11,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Explosion",
+    "_name": "RocketTrail",
     "_objFlags": 0,
     "_parent": null,
     "_children": [],
@@ -40,7 +40,7 @@
     "_materials": [{"__uuid__": "eca5d2f2-8ef6-41c2-bbe6-f9c79d09c432"}],
     "_srcBlendFactor": 770,
     "_dstBlendFactor": 771,
-    "_spriteFrame": {"__uuid__": "c3cde521-3fb3-44f0-bdfe-2b388fd94527"},
+    "_spriteFrame": {"__uuid__": "ad102a2f-126c-4d6e-87b4-a67c985a8847"},
     "_type": 0,
     "_sizeMode": 0,
     "_fillType": 0,

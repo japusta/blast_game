@@ -1,4 +1,4 @@
-import { BoardModel } from "./BoardModel";
+import { IBoardModel } from "./IBoardModel";
 import { TileModel } from "./TileModel";
 
 export interface IBooster {
@@ -11,7 +11,7 @@ export interface IBooster {
    * @param targetCol Optional target column for boosters that need a second tile
    */
   use(
-    board: BoardModel,
+    board: IBoardModel,
     row: number,
     col: number,
     targetRow?: number,

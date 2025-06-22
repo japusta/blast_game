@@ -1,7 +1,7 @@
 // assets/scripts/models/Boosters.ts
 
 import { TileModel } from "./TileModel";
-import { BoardModel } from "./BoardModel";
+import { IBoardModel } from "./IBoardModel";
 import { IBooster } from "./IBooster";
 
 
@@ -25,7 +25,7 @@ export class BombBooster implements IBooster {
     return this.radius;
   }
 
-  public use(board: BoardModel, row: number, col: number): TileModel[] {
+  public use(board: IBoardModel, row: number, col: number): TileModel[] {
     if (this._count <= 0) return [];
 
     return board.getTilesInRadius(row, col, this.radius);
@@ -50,7 +50,7 @@ export class TeleportBooster implements IBooster {
   }
 
   public use(
-    board: BoardModel,
+    board: IBoardModel,
     r1: number,
     c1: number,
     r2: number,

@@ -5,6 +5,7 @@ import { ClickResult } from "../models/ClickResult";
 import { GridView } from "./GridView";
 import { IGridView } from "./IGridView";
 import { GameFactory } from "../models/GameFactory";
+import { BoosterType } from "../models/BoosterType";
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -37,7 +38,7 @@ export default class GameController extends cc.Component {
   @property(cc.Label) countTeleportLabel!: cc.Label;
   private model!: GameModel;
   private gridView!: IGridView;
-  private useBooster: string | null = null;
+  private useBooster: BoosterType | null = null;
   private teleportFrom: [number, number] | null = null;
   private gameFactory: GameFactory = new GameFactory();
 
@@ -165,7 +166,7 @@ private onRestartCustom() {
   private async onTileClicked(row: number, col: number) {
     let res: ClickResult;
 
-    if (this.useBooster === "teleport") {
+    if (this.useBooster === BoosterType.Teleport) {
       if (!this.teleportFrom) {
         this.teleportFrom = [row, col];
         this.updateUI();
@@ -173,7 +174,7 @@ private onRestartCustom() {
       }
 
       const [r1, c1] = this.teleportFrom;
-      res = this.model.click(row, col, "teleport", r1, c1);
+      res = this.model.click(row, col, BoosterType.Teleport, r1, c1);
 
       if (res.moved.length === 0) {
         this.teleportFrom = null;
@@ -222,8 +223,8 @@ private onRestartCustom() {
     this.movesLabel.string = `${this.model.movesLeft}`;
 
     // новые строчки
-    this.countBombLabel.string = `${this.model.bomb.count}`;
-    this.countTeleportLabel.string = `${this.model.teleport.count}`;
+    this.countBombLabel.string = `${this.model.bomb ? this.model.bomb.count : 0}`;
+    this.countTeleportLabel.string = `${this.model.teleport ? this.model.teleport.count : 0}`;
     // this.boosterLabel.string = this.useBooster
     //   ? `Booster: ${this.useBooster}`
     //   : "Booster: none";
@@ -232,15 +233,15 @@ private onRestartCustom() {
 
   /** Бомба */
   public onBombButton() {
-    this.useBooster = "bomb";
+    this.useBooster = BoosterType.Bomb;
     this.updateUI();
   }
 
   /** Телепорт */
   public onTeleportButton() {
     // if (!this.teleportFrom) this.teleportFrom = [0, 0];
-    // this.useBooster = "teleport";
-    this.useBooster = "teleport";
+    // this.useBooster = BoosterType.Teleport;
+    this.useBooster = BoosterType.Teleport;
     this.teleportFrom = null;
     this.updateUI();
   }

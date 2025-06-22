@@ -157,6 +157,21 @@
     "explosionPrefab": {
       "__uuid__": "cdf2cb01-0230-4e7d-9694-859cffb1aa40"
     },
+    "rocketRowOffset": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0
+    },
+    "rocketColumnOffset": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0
+    },
+    "explosionOffset": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0
+    },
     "_id": ""
   },
   {

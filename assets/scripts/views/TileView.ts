@@ -33,6 +33,15 @@ export default class TileView extends cc.Component {
   @property(cc.Prefab)
   explosionPrefab: cc.Prefab = null;
 
+  @property(cc.Vec2)
+  rocketRowOffset: cc.Vec2 = new cc.Vec2(0, 0);
+
+  @property(cc.Vec2)
+  rocketColumnOffset: cc.Vec2 = new cc.Vec2(0, 0);
+
+  @property(cc.Vec2)
+  explosionOffset: cc.Vec2 = new cc.Vec2(0, 0);
+
   private model!: TileModel;
   private clickCallback!: (r: number, c: number) => void;
 

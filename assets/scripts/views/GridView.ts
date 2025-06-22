@@ -62,8 +62,10 @@ export class GridView implements IGridView {
       const startNode = this.gridNode.getChildByName(`tile_${clickRow}_${clickCol}`);
       const tv = startNode ? (startNode.getComponent('TileView') as any) : null;
       if (startNode && tv) {
-        const startPos = this.toPosition(model, clickCol, clickRow);
+        let startPos = this.toPosition(model, clickCol, clickRow);
         if (trigger === SuperType.Row && tv.rocketRowPrefab) {
+          startPos.x += tv.rocketRowOffset.x;
+          startPos.y += tv.rocketRowOffset.y;
           const left = cc.instantiate(tv.rocketRowPrefab);
           const right = cc.instantiate(tv.rocketRowPrefab);
           left.setPosition(startPos);
@@ -73,7 +75,9 @@ export class GridView implements IGridView {
           await Promise.all([
             new Promise<void>((res) => {
               cc.tween(left)
-                .to(0.3, { position: this.toPosition(model, 0, clickRow) })
+                .to(0.3, {
+                  position: this.toPosition(model, 0, clickRow).add(new cc.Vec3(tv.rocketRowOffset.x, tv.rocketRowOffset.y, 0)),
+                })
                 .call(() => {
                   left.destroy();
                   res();
@@ -82,7 +86,9 @@ export class GridView implements IGridView {
             }),
             new Promise<void>((res) => {
               cc.tween(right)
-                .to(0.3, { position: this.toPosition(model, model.board.cols - 1, clickRow) })
+                .to(0.3, {
+                  position: this.toPosition(model, model.board.cols - 1, clickRow).add(new cc.Vec3(tv.rocketRowOffset.x, tv.rocketRowOffset.y, 0)),
+                })
                 .call(() => {
                   right.destroy();
                   res();
@@ -91,6 +97,8 @@ export class GridView implements IGridView {
             }),
           ]);
         } else if (trigger === SuperType.Column && tv.rocketColumnPrefab) {
+          startPos.x += tv.rocketColumnOffset.x;
+          startPos.y += tv.rocketColumnOffset.y;
           const up = cc.instantiate(tv.rocketColumnPrefab);
           const down = cc.instantiate(tv.rocketColumnPrefab);
           up.setPosition(startPos);
@@ -100,7 +108,9 @@ export class GridView implements IGridView {
           await Promise.all([
             new Promise<void>((res) => {
               cc.tween(up)
-                .to(0.3, { position: this.toPosition(model, clickCol, 0) })
+                .to(0.3, {
+                  position: this.toPosition(model, clickCol, 0).add(new cc.Vec3(tv.rocketColumnOffset.x, tv.rocketColumnOffset.y, 0)),
+                })
                 .call(() => {
                   up.destroy();
                   res();
@@ -109,7 +119,11 @@ export class GridView implements IGridView {
             }),
             new Promise<void>((res) => {
               cc.tween(down)
-                .to(0.3, { position: this.toPosition(model, clickCol, model.board.rows - 1) })
+                .to(0.3, {
+                  position: this.toPosition(model, clickCol, model.board.rows - 1).add(
+                    new cc.Vec3(tv.rocketColumnOffset.x, tv.rocketColumnOffset.y, 0)
+                  ),
+                })
                 .call(() => {
                   down.destroy();
                   res();
@@ -118,6 +132,8 @@ export class GridView implements IGridView {
             }),
           ]);
         } else if (trigger === SuperType.Radius && tv.explosionPrefab) {
+          startPos.x += tv.explosionOffset.x;
+          startPos.y += tv.explosionOffset.y;
           const exp = cc.instantiate(tv.explosionPrefab);
           exp.setPosition(startPos);
           this.gridNode.addChild(exp);

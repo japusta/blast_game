@@ -1,4 +1,4 @@
-import { BoardModel } from "./BoardModel";
+import { IBoardModel } from "./IBoardModel";
 import { BombBooster, TeleportBooster } from "./Boosters";
 import { SuperHandlerFactory } from "./SuperHandlers";
 import { TileModel } from "./TileModel";
@@ -13,7 +13,7 @@ export interface ClickOutcome {
 
 export class ClickProcessor implements IClickProcessor {
   constructor(
-    private board: BoardModel,
+    private board: IBoardModel,
     private bomb: BombBooster,
     private teleport: TeleportBooster,
     private superFactory: SuperHandlerFactory

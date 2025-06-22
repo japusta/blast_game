@@ -1,6 +1,7 @@
 import { TileModel, TileColor, SuperType } from "./TileModel";
+import { IBoardModel } from "./IBoardModel";
 
-export class BoardModel {
+export class BoardModel implements IBoardModel {
   private _grid: TileModel[][] = [];
   rows: number;
   cols: number;

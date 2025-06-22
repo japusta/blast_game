@@ -2,8 +2,8 @@ export interface IClickProcessor {
   process(
     row: number,
     col: number,
-    useBooster?: import("./BoosterType").BoosterType | null,
+    useBooster?: import("./Boosters").BoosterType | null,
     r2?: number,
     c2?: number
-  ): import("./ClickProcessor").ClickOutcome;
+  ): import("./ClickOutcome").ClickOutcome;
 }

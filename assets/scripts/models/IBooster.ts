@@ -1,10 +1,22 @@
+import { BoardModel } from "./BoardModel";
+import { TileModel } from "./TileModel";
+
 export interface IBooster {
   /**
    * Perform booster action.
-   * - bomb: return affected tiles
-   * - teleport: swap tiles and return empty array
+   * @param board The game board
+   * @param row Row index of the first tile
+   * @param col Column index of the first tile
+   * @param targetRow Optional target row for boosters that need a second tile
+   * @param targetCol Optional target column for boosters that need a second tile
    */
-  use(...args: any[]): import("./TileModel").TileModel[];
+  use(
+    board: BoardModel,
+    row: number,
+    col: number,
+    targetRow?: number,
+    targetCol?: number
+  ): TileModel[];
 
   /** Decrease remaining uses */
   decrement(): void;

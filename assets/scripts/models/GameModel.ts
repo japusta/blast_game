@@ -1,48 +1,43 @@
-import { IBoardModel } from "./IBoardModel";
+import { BoardModel } from "./BoardModel";
 import { IBooster } from "./IBooster";
+import { BoosterType } from "./Boosters";
 import { ClickResult } from "./ClickResult";
 import { IClickProcessor } from "./IClickProcessor";
-import { BoosterType } from "./BoosterType";
 
 export class GameModel {
-  board: IBoardModel;
+  board: BoardModel;
   score = 0;
   movesLeft: number;
   targetScore: number;
   shuffleCount = 0;
   maxShuffles = 3;
 
-  private boosters: Map<BoosterType, IBooster>;
+  public readonly bomb: IBooster;
+  public readonly teleport: IBooster;
   private clickProcessor: IClickProcessor;
 
   constructor(
-    board: IBoardModel,
+    board: BoardModel,
     moves: number,
     target: number,
     clickProcessor: IClickProcessor,
-    boosters: Map<BoosterType, IBooster>
+    bomb: IBooster,
+    teleport: IBooster
   ) {
     this.board = board;
     this.movesLeft = moves;
     this.targetScore = target;
     this.clickProcessor = clickProcessor;
-    this.boosters = boosters;
-  }
-
-  public get bomb(): IBooster | undefined {
-    return this.boosters.get(BoosterType.Bomb);
-  }
-
-  public get teleport(): IBooster | undefined {
-    return this.boosters.get(BoosterType.Teleport);
+    this.bomb = bomb;
+    this.teleport = teleport;
   }
 
   public get bombCount(): number {
-    return this.bomb ? this.bomb.count : 0;
+    return this.bomb.count;
   }
 
   public get teleportCount(): number {
-    return this.teleport ? this.teleport.count : 0;
+    return this.teleport.count;
   }
 
   public click(

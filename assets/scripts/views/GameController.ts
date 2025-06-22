@@ -5,6 +5,7 @@ import { ClickResult } from "../models/ClickResult";
 import { GridView } from "./GridView";
 import { IGridView } from "./IGridView";
 import { GameFactory } from "../models/GameFactory";
+import UIManager from "./UIManager";
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -39,6 +40,7 @@ export default class GameController extends cc.Component {
   private gridView!: IGridView;
   private useBooster: string | null = null;
   private teleportFrom: [number, number] | null = null;
+  private uiManager!: UIManager;
   private gameFactory: GameFactory = new GameFactory();
 
   private readonly tileSize = 130;
@@ -49,36 +51,28 @@ export default class GameController extends cc.Component {
   }
 
   onLoad() {
-    // 1) Скрываем все попапы
-    this.popupContainer.active = false;
-    this.winPopup.active = false;
-    this.losePopup.active = false;
-    this.customPopup.active = false;
-
-    // 2) Вешаем обработчики на кнопки внутри Win/Lose
-    [this.winPopup, this.losePopup].forEach((popup) => {
-      // кнопка «Сыграть ещё раз»
-      const restartBtn = popup.getChildByName("RestartButtonTemplate");
-      if (restartBtn) {
-        restartBtn
-          .getComponent(cc.Button)!
-          .node.on("click", this.onRestartDefault, this);
+    this.uiManager = new UIManager(
+      this.popupContainer,
+      this.winPopup,
+      this.losePopup,
+      this.customPopup,
+      this.movesInput,
+      this.scoreInput,
+      this.startCustomBtn,
+      this.bombButton,
+      this.teleportButton,
+      this.scoreLabel,
+      this.movesLabel,
+      this.countBombLabel,
+      this.countTeleportLabel,
+      (r, c, m, t) => this._restartGame(r, c, m, t),
+      (booster) => {
+        this.useBooster = booster;
+        if (booster === "teleport") this.teleportFrom = null;
+        this.uiManager.updateUI(this.model);
       }
-      // кнопка «Задать свои параметры»
-      const customBtn = popup.getChildByName("ShowCustomBtn");
-      if (customBtn) {
-        customBtn
-          .getComponent(cc.Button)!
-          .node.on("click", this.onShowCustom, this);
-      }
-    });
-
-    // 3) Кнопка «Старт с кастомными» внутри формы
-    this.startCustomBtn.node.on("click", this.onRestartCustom, this);
-    // при клике на иконку бомбы
-    this.bombButton.node.on("click", this.onBombButton, this);
-    // при клике на иконку телепорта
-    this.teleportButton.node.on("click", this.onTeleportButton, this);
+    );
+    this.uiManager.init();
   }
 
   start() {
@@ -93,11 +87,7 @@ export default class GameController extends cc.Component {
     moves: number,
     target: number
   ) {
-    // спрячем все попапы
-    this.popupContainer.active = false;
-    this.winPopup.active = false;
-    this.losePopup.active = false;
-    this.customPopup.active = false;
+    this.uiManager.hideAllPopups();
 
     // создаём новую модель через фабрику
     this.model = this.gameFactory.create(rows, cols, moves, target);
@@ -106,57 +96,9 @@ export default class GameController extends cc.Component {
 
     // рендерим поле и обновляем HUD
     this.gridView.render(this.model, this.onTileClicked.bind(this));
-    this.updateUI();
+    this.uiManager.updateUI(this.model);
   }
 
-  /** Дефолтный рестарт (из Win/Lose) */
-  private onRestartDefault() {
-    this._restartGame(10, 10, 20, 500);
-  }
-
-  /** Показать форму кастомных настроек */
-  private onShowCustom() {
-    // показываем фон
-    this.popupContainer.active = true;
-    // прячем окна Win/Lose
-    this.winPopup.active = false;
-    this.losePopup.active = false;
-    // показываем форму
-    this.customPopup.active = true;
-  }
-
-  /** Перезапустить с кастомными параметрами */
-private onRestartCustom() {
-  const movesStr = this.movesInput.string.trim();
-  const scoreStr = this.scoreInput.string.trim();
-
-  let moves = parseInt(movesStr, 10);
-  let score = parseInt(scoreStr, 10);
-
-  // Жёсткая валидация
-  if (
-    isNaN(moves) ||
-    isNaN(score) ||
-    moves < 1 ||
-    moves > 999 ||         // свои лимиты!
-    score < 10 ||
-    score > 100000
-  ) {
-    // Можно показать popup, label или alert
-    cc.log("Неверные параметры! Ходы: 1-99, Очки: 10-100000");
-    // Например, выделить input красным:
-    this.movesInput.node.color = cc.Color.RED;
-    this.scoreInput.node.color = cc.Color.RED;
-    // Или popup (если хочешь)
-    return;
-  }
-
-  // Восстанавливаем нормальный цвет
-  this.movesInput.node.color = cc.Color.WHITE;
-  this.scoreInput.node.color = cc.Color.WHITE;
-
-  this._restartGame(10, 10, moves, score);
-}
 
 
 
@@ -168,7 +110,7 @@ private onRestartCustom() {
     if (this.useBooster === "teleport") {
       if (!this.teleportFrom) {
         this.teleportFrom = [row, col];
-        this.updateUI();
+        this.uiManager.updateUI(this.model);
         return;
       }
 
@@ -178,7 +120,7 @@ private onRestartCustom() {
       if (res.moved.length === 0) {
         this.teleportFrom = null;
         this.useBooster = null;
-        this.updateUI();
+        this.uiManager.updateUI(this.model);
         return;
       }
 
@@ -186,7 +128,7 @@ private onRestartCustom() {
       this.gridView.render(this.model, this.onTileClicked.bind(this));
       this.teleportFrom = null;
       this.useBooster = null;
-      this.updateUI();
+      this.uiManager.updateUI(this.model);
       return;
     }
 
@@ -196,52 +138,12 @@ private onRestartCustom() {
 
     await this.gridView.animateResult(res, this.model, this.onTileClicked.bind(this));
 
-    this.updateUI();
+    this.uiManager.updateUI(this.model);
     if (this.model.score >= this.model.targetScore) {
-      this.showPopup(this.winPopup);
+      this.uiManager.showPopup(this.winPopup);
     } else if (this.model.movesLeft <= 0) {
-      this.showPopup(this.losePopup);
+      this.uiManager.showPopup(this.losePopup);
     }
   }
 
-  /** Показ нужного попапа + блок кликов по полю */
-  private showPopup(popup: cc.Node) {
-    this.popupContainer.active = true;
-    // блокируем тайлы
-    this.gridNode.children.forEach((n) => n.off(cc.Node.EventType.TOUCH_END));
-    // прячем всё, кроме нужного
-    this.winPopup.active = false;
-    this.losePopup.active = false;
-    this.customPopup.active = false;
-    popup.active = true;
-  }
-
-  /** Обновление HUD */
-  private updateUI() {
-    this.scoreLabel.string = `ОЧКИ: ${this.model.score}/${this.model.targetScore}`;
-    this.movesLabel.string = `${this.model.movesLeft}`;
-
-    // новые строчки
-    this.countBombLabel.string = `${this.model.bomb.count}`;
-    this.countTeleportLabel.string = `${this.model.teleport.count}`;
-    // this.boosterLabel.string = this.useBooster
-    //   ? `Booster: ${this.useBooster}`
-    //   : "Booster: none";
-  }
-
-
-  /** Бомба */
-  public onBombButton() {
-    this.useBooster = "bomb";
-    this.updateUI();
-  }
-
-  /** Телепорт */
-  public onTeleportButton() {
-    // if (!this.teleportFrom) this.teleportFrom = [0, 0];
-    // this.useBooster = "teleport";
-    this.useBooster = "teleport";
-    this.teleportFrom = null;
-    this.updateUI();
-  }
 }

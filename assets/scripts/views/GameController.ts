@@ -107,41 +107,54 @@ export default class GameController extends cc.Component {
 
   /** Обработка клика + анимации + проверка конца */
   private async onTileClicked(row: number, col: number) {
-    let res: ClickResult;
-
     if (this.useBooster === BoosterType.Teleport) {
-      if (!this.teleportFrom) {
-        this.teleportFrom = [row, col];
-        this.uiManager.updateUI(this.model);
-        return;
-      }
+      await this.handleTeleportClick(row, col);
+      return;
+    }
 
-      const [r1, c1] = this.teleportFrom;
-      res = this.model.click(row, col, BoosterType.Teleport, r1, c1);
+    await this.handleRegularClick(row, col);
+  }
 
-      if (res.moved.length === 0) {
-        this.teleportFrom = null;
-        this.useBooster = null;
-        this.uiManager.updateUI(this.model);
-        return;
-      }
+  private async handleTeleportClick(row: number, col: number) {
+    if (!this.teleportFrom) {
+      this.teleportFrom = [row, col];
+      this.uiManager.updateUI(this.model);
+      return;
+    }
 
-      await this.gridView.animateSwap(res.moved, this.model);
-      this.gridView.render(this.model, this.onTileClicked.bind(this));
+    const [r1, c1] = this.teleportFrom;
+    const res = this.model.click(row, col, BoosterType.Teleport, r1, c1);
+
+    if (res.moved.length === 0) {
       this.teleportFrom = null;
       this.useBooster = null;
       this.uiManager.updateUI(this.model);
       return;
     }
 
+    await this.gridView.animateSwap(res.moved, this.model);
+    this.gridView.render(this.model, this.onTileClicked.bind(this));
+    this.teleportFrom = null;
+    this.useBooster = null;
+    this.uiManager.updateUI(this.model);
+  }
+
+  private async handleRegularClick(row: number, col: number) {
     const used = this.useBooster;
 
-    res = this.model.click(row, col, this.useBooster);
+    const res = this.model.click(row, col, this.useBooster);
 
     this.useBooster = null;
     this.teleportFrom = null;
 
-    await this.gridView.animateResult(res, this.model, this.onTileClicked.bind(this), row, col, used);
+    await this.gridView.animateResult(
+      res,
+      this.model,
+      this.onTileClicked.bind(this),
+      row,
+      col,
+      used
+    );
     this.uiManager.updateUI(this.model);
     if (this.model.score >= this.model.targetScore) {
       this.uiManager.showPopup(this.winPopup);

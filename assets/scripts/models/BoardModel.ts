@@ -147,24 +147,34 @@ export class BoardModel implements IBoardModel {
     created: { row: number, col: number, color: number }[],
     superTile: TileModel | null
   } {
-    // Удаляем группу
+    this.removeTiles(group);
+
+    let superTile: TileModel | null = null;
+    if (createSuper && group.length >= this.superThreshold) {
+      superTile = this.insertSuperTile(group[0]);
+    }
+
+    const moved = this.dropTiles();
+    const created = this.fillEmpty();
+
+    return { moved, created, superTile };
+  }
+
+  private removeTiles(group: TileModel[]) {
     for (const t of group) {
       this._grid[t.row][t.col] = null!;
     }
+  }
 
-    let superTile: TileModel | null = null;
-    // Если нужна вставка супертайла
-    if (createSuper && group.length >= this.superThreshold) {
-      // Берём первый тайл группы как базу
-      const base = group[0];
-      const superType = this.randomSuperType();
-      superTile = new TileModel(base.row, base.col, base.color, superType);
-      this._grid[base.row][base.col] = superTile;
-    }
+  private insertSuperTile(base: TileModel): TileModel {
+    const superType = this.randomSuperType();
+    const superTile = new TileModel(base.row, base.col, base.color, superType);
+    this._grid[base.row][base.col] = superTile;
+    return superTile;
+  }
 
-    const moved: { from: { r: number, c: number }, to: { r: number, c: number } }[] = [];
-
-    // ПАДЕНИЕ — всегда сверху вниз!
+  private dropTiles(): { from: { r: number; c: number }; to: { r: number; c: number } }[] {
+    const moved: { from: { r: number; c: number }; to: { r: number; c: number } }[] = [];
     for (let c = 0; c < this.cols; c++) {
       let pointer = this.rows - 1;
       for (let r = this.rows - 1; r >= 0; r--) {
@@ -179,14 +189,15 @@ export class BoardModel implements IBoardModel {
           pointer--;
         }
       }
-      // Очищаем всё выше pointer
       for (let r = pointer; r >= 0; r--) {
         this._grid[r][c] = null!;
       }
     }
+    return moved;
+  }
 
-    const created: { row: number, col: number, color: number }[] = [];
-    // ЗАПОЛНЯЕМ пустоты
+  private fillEmpty(): { row: number; col: number; color: number }[] {
+    const created: { row: number; col: number; color: number }[] = [];
     for (let c = 0; c < this.cols; c++) {
       for (let r = 0; r < this.rows; r++) {
         if (!this._grid[r][c]) {
@@ -196,8 +207,7 @@ export class BoardModel implements IBoardModel {
         }
       }
     }
-
-    return { moved, created, superTile };
+    return created;
   }
 
   private randomSuperType(): SuperType {

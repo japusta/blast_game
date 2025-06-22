@@ -3,6 +3,8 @@ import { BoardModel } from "./BoardModel";
 import { BombBooster, TeleportBooster } from "./Boosters";
 import { SuperHandlerFactory } from "./SuperHandlers";
 import { ClickProcessor } from "./ClickProcessor";
+import { BoosterType } from "./BoosterType";
+import { IBooster } from "./IBooster";
 
 export class GameFactory {
   create(rows: number, cols: number, moves: number, target: number): GameModel {
@@ -10,7 +12,11 @@ export class GameFactory {
     const bomb = new BombBooster(1);
     const teleport = new TeleportBooster();
     const superFactory = new SuperHandlerFactory(bomb.blastRadius);
-    const processor = new ClickProcessor(board, bomb, teleport, superFactory);
-    return new GameModel(board, moves, target, processor, bomb, teleport);
+    const boosters: Map<BoosterType, IBooster> = new Map([
+      [BoosterType.Bomb, bomb],
+      [BoosterType.Teleport, teleport],
+    ]);
+    const processor = new ClickProcessor(board, boosters, superFactory);
+    return new GameModel(board, moves, target, processor, boosters);
   }
 }

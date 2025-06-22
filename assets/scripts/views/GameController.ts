@@ -5,7 +5,7 @@ import { ClickResult } from "../models/ClickResult";
 import { GridView } from "./GridView";
 import { IGridView } from "./IGridView";
 import { BoardModel } from "../models/BoardModel";
-import { BombBooster, TeleportBooster } from "../models/Boosters";
+import { BombBooster, TeleportBooster, BoosterType } from "../models/Boosters";
 import { SuperHandlerFactory } from "../models/SuperHandlers";
 import { ClickProcessor } from "../models/ClickProcessor";
 const { ccclass, property } = cc._decorator;
@@ -40,7 +40,7 @@ export default class GameController extends cc.Component {
   @property(cc.Label) countTeleportLabel!: cc.Label;
   private model!: GameModel;
   private gridView!: IGridView;
-  private useBooster: string | null = null;
+  private useBooster: BoosterType | null = null;
   private teleportFrom: [number, number] | null = null;
 
   private readonly tileSize = 130;
@@ -170,7 +170,7 @@ private onRestartCustom() {
   private async onTileClicked(row: number, col: number) {
     let res: ClickResult;
 
-    if (this.useBooster === "teleport") {
+    if (this.useBooster === BoosterType.Teleport) {
       if (!this.teleportFrom) {
         this.teleportFrom = [row, col];
         this.updateUI();
@@ -178,7 +178,7 @@ private onRestartCustom() {
       }
 
       const [r1, c1] = this.teleportFrom;
-      res = this.model.click(row, col, "teleport", r1, c1);
+      res = this.model.click(row, col, BoosterType.Teleport, r1, c1);
 
       if (res.moved.length === 0) {
         this.teleportFrom = null;
@@ -237,7 +237,7 @@ private onRestartCustom() {
 
   /** Бомба */
   public onBombButton() {
-    this.useBooster = "bomb";
+    this.useBooster = BoosterType.Bomb;
     this.updateUI();
   }
 
@@ -245,7 +245,7 @@ private onRestartCustom() {
   public onTeleportButton() {
     // if (!this.teleportFrom) this.teleportFrom = [0, 0];
     // this.useBooster = "teleport";
-    this.useBooster = "teleport";
+    this.useBooster = BoosterType.Teleport;
     this.teleportFrom = null;
     this.updateUI();
   }

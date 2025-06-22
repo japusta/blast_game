@@ -1,21 +1,17 @@
 import { BoardModel } from "./BoardModel";
-import { BombBooster, TeleportBooster } from "./Boosters";
+import { BoosterType } from "./Boosters";
+import { IBooster } from "./IBooster";
 import { SuperHandlerFactory } from "./SuperHandlers";
 import { TileModel } from "./TileModel";
 import { ClickResult } from "./ClickResult";
 import { IClickProcessor } from "./IClickProcessor";
-
-export interface ClickOutcome {
-  result: ClickResult;
-  scoreDelta: number;
-  consumeMove: boolean;
-}
+import { ClickOutcome } from "./ClickOutcome";
 
 export class ClickProcessor implements IClickProcessor {
   constructor(
     private board: BoardModel,
-    private bomb: BombBooster,
-    private teleport: TeleportBooster,
+    private bomb: IBooster,
+    private teleport: IBooster,
     private superFactory: SuperHandlerFactory
   ) {}
 
@@ -26,7 +22,7 @@ export class ClickProcessor implements IClickProcessor {
   process(
     row: number,
     col: number,
-    useBooster: string | null = null,
+    useBooster: BoosterType | null = null,
     r2?: number,
     c2?: number
   ): ClickOutcome {
@@ -36,10 +32,10 @@ export class ClickProcessor implements IClickProcessor {
       return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
     }
 
-    if (useBooster === "bomb") {
-      toRemove = this.bomb.use(row, col, this.board);
+    if (useBooster === BoosterType.Bomb) {
+      toRemove = this.bomb.use(this.board, row, col);
       this.bomb.decrement();
-    } else if (useBooster === "teleport" && r2 != null && c2 != null) {
+    } else if (useBooster === BoosterType.Teleport && r2 != null && c2 != null) {
       const isAdjacent =
         (row === r2 && Math.abs(col - c2) === 1) ||
         (col === c2 && Math.abs(row - r2) === 1);
@@ -48,7 +44,7 @@ export class ClickProcessor implements IClickProcessor {
         return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
       }
 
-      this.teleport.use(row, col, this.board, r2, c2);
+      this.teleport.use(this.board, row, col, r2, c2);
       this.teleport.decrement();
       const moved = [
         { from: { r: row, c: col }, to: { r: r2, c: c2 } },

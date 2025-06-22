@@ -1,5 +1,6 @@
 import { BoardModel } from "./BoardModel";
 import { IBooster } from "./IBooster";
+import { BoosterType } from "./Boosters";
 import { ClickResult } from "./ClickResult";
 import { IClickProcessor } from "./IClickProcessor";
 
@@ -42,7 +43,7 @@ export class GameModel {
   public click(
     row: number,
     col: number,
-    useBooster: string | null = null,
+    useBooster: BoosterType | null = null,
     r2?: number,
     c2?: number
   ): ClickResult {

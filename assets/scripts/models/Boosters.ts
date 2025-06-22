@@ -4,6 +4,11 @@ import { TileModel } from "./TileModel";
 import { BoardModel } from "./BoardModel";
 import { IBooster } from "./IBooster";
 
+export enum BoosterType {
+  Bomb = "bomb",
+  Teleport = "teleport",
+}
+
 // interface moved to IBooster.ts
 
 export class BombBooster implements IBooster {
@@ -24,7 +29,7 @@ export class BombBooster implements IBooster {
     return this.radius;
   }
 
-  public use(row: number, col: number, board: BoardModel): TileModel[] {
+  public use(board: BoardModel, row: number, col: number): TileModel[] {
     if (this._count <= 0) return [];
 
     return board.getTilesInRadius(row, col, this.radius);
@@ -49,9 +54,9 @@ export class TeleportBooster implements IBooster {
   }
 
   public use(
+    board: BoardModel,
     r1: number,
     c1: number,
-    board: BoardModel,
     r2: number,
     c2: number
   ): TileModel[] {

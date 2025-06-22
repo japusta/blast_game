@@ -134,12 +134,14 @@ export default class GameController extends cc.Component {
       return;
     }
 
+    const used = this.useBooster;
+
     res = this.model.click(row, col, this.useBooster);
 
     this.useBooster = null;
     this.teleportFrom = null;
 
-    await this.gridView.animateResult(res, this.model, this.onTileClicked.bind(this), row, col);
+    await this.gridView.animateResult(res, this.model, this.onTileClicked.bind(this), row, col, used);
     this.uiManager.updateUI(this.model);
     if (this.model.score >= this.model.targetScore) {
       this.uiManager.showPopup(this.winPopup);

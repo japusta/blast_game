@@ -31,6 +31,9 @@ export default class TileView extends cc.Component {
   rocketColumnPrefab: cc.Prefab = null;
 
   @property(cc.Prefab)
+  rocketTrailPrefab: cc.Prefab = null;
+
+  @property(cc.Prefab)
   explosionPrefab: cc.Prefab = null;
 
   @property(cc.Vec2)

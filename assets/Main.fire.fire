@@ -858,7 +858,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 388.19,
-      "height": 50.4
+      "height": 107.1
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -912,7 +912,7 @@
     "_string": "Score: 0",
     "_N$string": "Score: 0",
     "_fontSize": 85,
-    "_lineHeight": 40,
+    "_lineHeight": 0,
     "_enableWrapText": true,
     "_N$file": {
       "__uuid__": "84a72989-320f-4a4b-a2c5-b6dc838aa2f4"
@@ -2636,7 +2636,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 292,
+      "width": 300,
       "height": 70
     },
     "_anchorPoint": {
@@ -2707,7 +2707,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 292,
+      "width": 300,
       "height": 70
     },
     "_anchorPoint": {
@@ -3046,7 +3046,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 200,
+      "width": 225,
       "height": 140
     },
     "_anchorPoint": {
@@ -3115,7 +3115,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 270,
+      "width": 295,
       "height": 140
     },
     "_anchorPoint": {
@@ -3189,7 +3189,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        0,
+        4,
         0,
         0,
         0,
@@ -3586,7 +3586,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 290,
+      "width": 300,
       "height": 70
     },
     "_anchorPoint": {
@@ -3657,7 +3657,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 290,
+      "width": 300,
       "height": 70
     },
     "_anchorPoint": {
@@ -3996,7 +3996,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 200,
+      "width": 225,
       "height": 105
     },
     "_anchorPoint": {
@@ -4065,7 +4065,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 270,
+      "width": 295,
       "height": 140
     },
     "_anchorPoint": {
@@ -4139,7 +4139,7 @@
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        0,
+        4,
         0,
         0,
         0,
@@ -5819,9 +5819,6 @@
     },
     "teleportButton": {
       "__id__": 44
-    },
-    "superRowFrame": {
-      "__uuid__": "4d79e54f-42b1-4985-b86e-05766df58e7c"
     },
     "countBombLabel": {
       "__id__": 28

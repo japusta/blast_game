@@ -1,6 +1,6 @@
 import { GameModel } from "../models/GameModel";
 import { ClickResult } from "../models/ClickResult";
-import { TileModel } from "../models/TileModel";
+import { TileModel, SuperType } from "../models/TileModel";
 import { IGridView } from "./IGridView";
 
 export class GridView implements IGridView {
@@ -46,7 +46,158 @@ export class GridView implements IGridView {
     );
   }
 
-  async animateResult(result: ClickResult, model: GameModel, onClick: (r: number, c: number) => void): Promise<void> {
+  async animateResult(
+    result: ClickResult,
+    model: GameModel,
+    onClick: (r: number, c: number) => void,
+    clickRow?: number,
+    clickCol?: number
+  ): Promise<void> {
+    const trigger = result.triggerType;
+    const effectPromises: Promise<void>[] = [];
+    const delayedRemoved = new Set<string>();
+    if (
+      trigger != null &&
+      clickRow != null &&
+      clickCol != null
+    ) {
+      const startNode = this.gridNode.getChildByName(`tile_${clickRow}_${clickCol}`);
+      const tv = startNode ? (startNode.getComponent('TileView') as any) : null;
+      if (startNode && tv) {
+        let startPos = this.toPosition(model, clickCol, clickRow);
+        if (trigger === SuperType.Row && tv.rocketRowPrefab) {
+          startPos.x += tv.rocketRowOffset.x;
+          startPos.y += tv.rocketRowOffset.y;
+          const left = cc.instantiate(tv.rocketRowPrefab);
+          const right = cc.instantiate(tv.rocketRowPrefab);
+          left.setPosition(startPos);
+          right.setPosition(startPos);
+          this.gridNode.addChild(left);
+          this.gridNode.addChild(right);
+          const maxDist = Math.max(clickCol, model.board.cols - 1 - clickCol) || 1;
+          const step = 0.3 / maxDist;
+          for (const { row, col } of result.removed) {
+            if (row === clickRow) {
+              delayedRemoved.add(`${row}_${col}`);
+              const n = this.gridNode.getChildByName(`tile_${row}_${col}`);
+              if (n) {
+                effectPromises.push(
+                  new Promise<void>((res) => {
+                    cc.tween(n)
+                      .delay(Math.abs(col - clickCol) * step)
+                      .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
+                      .call(() => {
+                        n.destroy();
+                        res();
+                      })
+                      .start();
+                  }),
+                );
+              }
+            }
+          }
+          effectPromises.push(
+            new Promise<void>((res) => {
+              cc.tween(left)
+                .to(0.3, {
+                  position: this.toPosition(model, 0, clickRow).add(new cc.Vec3(tv.rocketRowOffset.x, tv.rocketRowOffset.y, 0)),
+                })
+                .call(() => {
+                  left.destroy();
+                  res();
+                })
+                .start();
+            }),
+          );
+          effectPromises.push(
+            new Promise<void>((res) => {
+              cc.tween(right)
+                .to(0.3, {
+                  position: this.toPosition(model, model.board.cols - 1, clickRow).add(new cc.Vec3(tv.rocketRowOffset.x, tv.rocketRowOffset.y, 0)),
+                })
+                .call(() => {
+                  right.destroy();
+                  res();
+                })
+                .start();
+            }),
+          );
+        } else if (trigger === SuperType.Column && tv.rocketColumnPrefab) {
+          startPos.x += tv.rocketColumnOffset.x;
+          startPos.y += tv.rocketColumnOffset.y;
+          const up = cc.instantiate(tv.rocketColumnPrefab);
+          const down = cc.instantiate(tv.rocketColumnPrefab);
+          up.setPosition(startPos);
+          down.setPosition(startPos);
+          this.gridNode.addChild(up);
+          this.gridNode.addChild(down);
+          const maxDist = Math.max(clickRow, model.board.rows - 1 - clickRow) || 1;
+          const step = 0.3 / maxDist;
+          for (const { row, col } of result.removed) {
+            if (col === clickCol) {
+              delayedRemoved.add(`${row}_${col}`);
+              const n = this.gridNode.getChildByName(`tile_${row}_${col}`);
+              if (n) {
+                effectPromises.push(
+                  new Promise<void>((res) => {
+                    cc.tween(n)
+                      .delay(Math.abs(row - clickRow) * step)
+                      .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
+                      .call(() => {
+                        n.destroy();
+                        res();
+                      })
+                      .start();
+                  }),
+                );
+              }
+            }
+          }
+          effectPromises.push(
+            new Promise<void>((res) => {
+              cc.tween(up)
+                .to(0.3, {
+                  position: this.toPosition(model, clickCol, 0).add(new cc.Vec3(tv.rocketColumnOffset.x, tv.rocketColumnOffset.y, 0)),
+                })
+                .call(() => {
+                  up.destroy();
+                  res();
+                })
+                .start();
+            }),
+          );
+          effectPromises.push(
+            new Promise<void>((res) => {
+              cc.tween(down)
+                .to(0.3, {
+                  position: this.toPosition(model, clickCol, model.board.rows - 1).add(new cc.Vec3(tv.rocketColumnOffset.x, tv.rocketColumnOffset.y, 0)),
+                })
+                .call(() => {
+                  down.destroy();
+                  res();
+                })
+                .start();
+            }),
+          );
+        } else if (trigger === SuperType.Radius && tv.explosionPrefab) {
+          startPos.x += tv.explosionOffset.x;
+          startPos.y += tv.explosionOffset.y;
+          const exp = cc.instantiate(tv.explosionPrefab);
+          exp.setPosition(startPos);
+          this.gridNode.addChild(exp);
+          await new Promise<void>((res) => {
+            cc.tween(exp)
+              .to(0.5, { opacity: 0 })
+              .call(() => {
+                exp.destroy();
+                res();
+              })
+              .start();
+          });
+        }
+      }
+    await Promise.all(effectPromises);
+    }
     if (result.super && result.removed.some(t => t.row === result.super!.row && t.col === result.super!.col)) {
       const { row: sRow, col: sCol } = result.super!;
       const superNode = this.gridNode.getChildByName(`tile_${sRow}_${sCol}`);
@@ -65,9 +216,10 @@ export class GridView implements IGridView {
 
     await Promise.all(
       result.removed.map(({ row, col }) => {
+        if (delayedRemoved.has(`${row}_${col}`)) return Promise.resolve();
         const n = this.gridNode.getChildByName(`tile_${row}_${col}`);
         if (!n) return Promise.resolve();
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve) => {
           cc.tween(n)
             .to(0.2, { scale: 0, opacity: 0 }, { easing: cc.easing.quadIn })
             .call(() => {

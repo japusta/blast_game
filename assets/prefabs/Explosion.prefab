@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Tile",
+    "_name": "Explosion",
     "_objFlags": 0,
     "_parent": null,
     "_children": [],
@@ -21,13 +21,10 @@
     "_components": [
       {
         "__id__": 2
-      },
-      {
-        "__id__": 3
       }
     ],
     "_prefab": {
-      "__id__": 4
+      "__id__": 3
     },
     "_opacity": 255,
     "_color": {
@@ -44,15 +41,15 @@
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
+      "x": 0.5,
+      "y": 0.5
     },
     "_trs": {
       "__type__": "TypedArray",
       "ctor": "Float64Array",
       "array": [
-        -200,
-        15.124,
+        0,
+        0,
         0,
         0,
         0,
@@ -92,7 +89,7 @@
     "_srcBlendFactor": 770,
     "_dstBlendFactor": 771,
     "_spriteFrame": {
-      "__uuid__": "6651dada-72f3-4c2e-9edb-81539182cce2"
+      "__uuid__": "ad102a2f-126c-4d6e-87b4-a67c985a8847"
     },
     "_type": 0,
     "_sizeMode": 0,
@@ -106,72 +103,6 @@
     "_fillRange": 0,
     "_isTrimmedMode": true,
     "_atlas": null,
-    "_id": ""
-  },
-  {
-    "__type__": "4bfec7oE95MrJSCFi8umlSK",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "sprite": {
-      "__id__": 2
-    },
-    "frames": [
-      {
-        "__uuid__": "e71d0ac9-0f2c-4147-bd08-e4d2c89e4e23"
-      },
-      {
-        "__uuid__": "cf91f740-00e4-4c56-b01c-25870679d3f9"
-      },
-      {
-        "__uuid__": "86104ab8-fce1-4776-9b2c-a1b0e162675f"
-      },
-      {
-        "__uuid__": "af2d4c1a-70b4-40a8-b0e9-51d66ce37516"
-      },
-      {
-        "__uuid__": "6651dada-72f3-4c2e-9edb-81539182cce2"
-      }
-    ],
-    "superRowFrame": {
-      "__uuid__": "4d79e54f-42b1-4985-b86e-05766df58e7c"
-    },
-    "superColumnFrame": {
-      "__uuid__": "788da8d8-dcfa-47f0-83e6-515d55c6ee22"
-    },
-    "superRadiusFrame": {
-      "__uuid__": "ad102a2f-126c-4d6e-87b4-a67c985a8847"
-    },
-    "superFullFrame": {
-      "__uuid__": "c3cde521-3fb3-44f0-bdfe-2b388fd94527"
-    },
-    "rocketRowPrefab": {
-      "__uuid__": "57ecbf0b-8730-4373-8cab-4b3f70455f74"
-    },
-    "rocketColumnPrefab": {
-      "__uuid__": "08ef88ba-bffc-4fb5-9a33-a5394813f3dc"
-    },
-    "explosionPrefab": {
-      "__uuid__": "cdf2cb01-0230-4e7d-9694-859cffb1aa40"
-    },
-    "rocketRowOffset": {
-      "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 54
-    },
-    "rocketColumnOffset": {
-      "__type__": "cc.Vec2",
-      "x": 74,
-      "y": 0
-    },
-    "explosionOffset": {
-      "__type__": "cc.Vec2",
-      "x": 64,
-      "y": 64
-    },
     "_id": ""
   },
   {

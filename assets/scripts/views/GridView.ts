@@ -3,6 +3,7 @@ import { ClickResult } from "../models/ClickResult";
 import { TileModel, SuperType } from "../models/TileModel";
 import { BoosterType } from "../models/BoosterType";
 import { IGridView } from "./IGridView";
+import TileView from "./TileView";
 
 export class GridView implements IGridView {
   constructor(
@@ -23,7 +24,7 @@ export class GridView implements IGridView {
       .start();
   }
 
-  private spawnExplosion(target: cc.Node, tv?: any) {
+  private spawnExplosion(target: cc.Node, tv?: TileView | null) {
     if (!tv || !tv.explosionPrefab) return;
     const pos2d = target
       .getPosition()

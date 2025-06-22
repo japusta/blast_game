@@ -5,9 +5,9 @@ import { ITileRandomizer, TileRandomizer } from "./TileRandomizer";
 export class BoardModel implements IBoardModel {
   private _grid: TileModel[][] = [];
   private randomizer: ITileRandomizer;
-  rows: number;
-  cols: number;
-  superThreshold = 5;
+  readonly rows: number;
+  readonly cols: number;
+  readonly superThreshold = 5;
 
   public get gridData(): TileModel[][] {
     return this._grid;

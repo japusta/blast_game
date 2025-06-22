@@ -2,21 +2,9 @@
 
 import { TileModel } from "./TileModel";
 import { BoardModel } from "./BoardModel";
+import { IBooster } from "./IBooster";
 
-export interface IBooster {
-  /**
-   * Выполнить действие бустера:
-   * - bomb: вернуть массив тайлов в радиусе
-   * - teleport: поменять цвета и вернуть пустой массив
-   */
-  use(...args: any[]): TileModel[];
-
-  /** Уменьшить количество оставшихся применений бустера */
-  decrement(): void;
-
-  /** Сколько применений бустера осталось */
-  readonly count: number;
-}
+// interface moved to IBooster.ts
 
 export class BombBooster implements IBooster {
   private _count: number;
@@ -26,24 +14,20 @@ export class BombBooster implements IBooster {
    * @param initialCount сколько раз можно использовать бомбу
    */
   constructor(
-    private radius: number,
+    private readonly radius: number,
     initialCount: number = 3
   ) {
     this._count = initialCount;
   }
 
+  public get blastRadius(): number {
+    return this.radius;
+  }
+
   public use(row: number, col: number, board: BoardModel): TileModel[] {
     if (this._count <= 0) return [];
 
-    const group: TileModel[] = [];
-    for (let r = row - this.radius; r <= row + this.radius; r++) {
-      for (let c = col - this.radius; c <= col + this.radius; c++) {
-        if (r >= 0 && r < board.rows && c >= 0 && c < board.cols) {
-          group.push(board.grid[r][c]);
-        }
-      }
-    }
-    return group;
+    return board.getTilesInRadius(row, col, this.radius);
   }
 
   public decrement(): void {
@@ -73,17 +57,11 @@ export class TeleportBooster implements IBooster {
   ): TileModel[] {
     if (this._count <= 0) return [];
 
-    // Вместо свопа цветов — меняем объекты тайлов местами в grid
-    const t1 = board.grid[r1][c1];
-    const t2 = board.grid[r2][c2];
+    const t1 = board.getTile(r1, c1);
+    const t2 = board.getTile(r2, c2);
+    if (!t1 || !t2) return [];
 
-    // поменять сами ссылки в массиве
-    board.grid[r1][c1] = t2;
-    board.grid[r2][c2] = t1;
-
-    // обновить их внутренние координаты
-    t2.row = r1;  t2.col = c1;
-    t1.row = r2;  t1.col = c2;
+    board.swapTiles(r1, c1, r2, c2);
 
     return [];
   }

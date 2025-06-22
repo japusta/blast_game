@@ -1,6 +1,7 @@
 // assets/scripts/views/GameController.ts
 
-import { GameModel, ClickResult } from "../models/GameModel";
+import { GameModel } from "../models/GameModel";
+import { ClickResult } from "../models/ClickResult";
 const { ccclass, property } = cc._decorator;
 
 @ccclass

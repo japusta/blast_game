@@ -96,3 +96,29 @@ Blast Game
 
 **UIManager.ts** – управление пользовательским интерфейсом, обработка кнопок, всплывающих окон и отображение счётчиков бустеров и перемешиваний
 
+Вид игры
+-----------------------------------
+
+![image](https://github.com/user-attachments/assets/e3a449db-f758-487d-821b-3fa7d9e1b696)
+
+
+![{8FB87BF2-F288-4622-9888-7FFEAF9F1C60}](https://github.com/user-attachments/assets/ff8d20a5-f585-4ab7-9931-57c3c980a72b)
+
+![{51B9301A-3A6F-4208-A4DA-728608065364}](https://github.com/user-attachments/assets/f954ca03-94f8-4266-a95e-eae9986b8992)
+
+![{0A95EA14-519B-4951-83D5-9A10F61F3954}](https://github.com/user-attachments/assets/70a05edd-c0f0-412c-9387-e0336af0e111)
+
+![{8ED5FF1A-5224-4802-A02C-5448DB2C7F08}](https://github.com/user-attachments/assets/63d4f1b6-781a-4b6b-827d-0abe6dd37ac7)
+
+![{F732113D-D723-4749-818B-4FBD26BDE3A6}](https://github.com/user-attachments/assets/3a386980-538c-44c5-b0ff-980195e0f580)
+
+![{048F74BA-692B-4FE9-B3EE-E67485FE82A0}](https://github.com/user-attachments/assets/e7d1a55f-84c3-45d5-b926-4af95e9a7ad9)
+
+![{0477B248-E78E-4C2B-9FA1-B614D0B38C8C}](https://github.com/user-attachments/assets/6f15ef1d-928d-4a9b-835f-cc5a92904046)
+
+
+
+
+
+
+

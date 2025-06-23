@@ -42,6 +42,7 @@ export default class GameController extends cc.Component {
   private teleportFrom: [number, number] | null = null;
   private uiManager!: UIManager;
   private gameFactory: GameFactory = new GameFactory();
+  private gameOver = false;
 
   private readonly tileSize = 130;
   private readonly tileGap = 2;
@@ -88,6 +89,7 @@ export default class GameController extends cc.Component {
     target: number
   ) {
     this.uiManager.hideAllPopups();
+    this.gameOver = false;
 
     // создаём новую модель через фабрику
     this.model = this.gameFactory.create(rows, cols, moves, target);
@@ -99,12 +101,10 @@ export default class GameController extends cc.Component {
     this.uiManager.updateUI(this.model);
   }
 
-
-
-
-
   /** Обработка клика + анимации + проверка конца */
   private async onTileClicked(row: number, col: number) {
+    if (this.gameOver) return;
+
     if (this.useBooster === BoosterType.Teleport) {
       await this.handleTeleportClick(row, col);
       return;
@@ -156,8 +156,12 @@ export default class GameController extends cc.Component {
     this.uiManager.updateUI(this.model);
     if (this.model.score >= this.model.targetScore) {
       this.uiManager.showPopup(this.winPopup);
+      this.gameOver = true;
+     
     } else if (this.model.movesLeft <= 0) {
       this.uiManager.showPopup(this.losePopup);
+      this.gameOver = true;
+
     }
   }
 

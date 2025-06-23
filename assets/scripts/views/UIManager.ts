@@ -1,5 +1,6 @@
 import { BoosterType } from "../models/BoosterType";
 import { GameModel } from "../models/GameModel";
+import ButtonHoverEffect from "./ButtonHoverEffect";
 
 export class UIManager {
   constructor(
@@ -46,6 +47,8 @@ export class UIManager {
     this.startCustomBtn.node.on("click", this.onRestartCustom, this);
     this.bombButton.node.on("click", this.onBombButton, this);
     this.teleportButton.node.on("click", this.onTeleportButton, this);
+        this.bombButton.node.addComponent(ButtonHoverEffect);
+    this.teleportButton.node.addComponent(ButtonHoverEffect);
   }
 
   public hideAllPopups() {
@@ -63,11 +66,15 @@ export class UIManager {
     popup.active = true;
   }
 
-  public updateUI(model: GameModel) {
+  public updateUI(model: GameModel, active: BoosterType | null = null) {
     this.scoreLabel.string = `ОЧКИ: ${model.score}/${model.targetScore}`;
     this.movesLabel.string = `${model.movesLeft}`;
     this.countBombLabel.string = `${model.bomb.count}`;
     this.countTeleportLabel.string = `${model.teleport.count}`;
+        this.bombButton.interactable = model.bomb.count > 0;
+    this.teleportButton.interactable = model.teleport.count > 0;
+    this.bombButton.node.opacity = active === BoosterType.Bomb ? 180 : 255;
+    this.teleportButton.node.opacity = active === BoosterType.Teleport ? 180 : 255;
   }
 
   private onRestartDefault = () => {

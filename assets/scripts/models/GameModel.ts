@@ -41,6 +41,21 @@ export class GameModel {
     return this.teleport.count;
   }
 
+  public get shuffleLeft(): number {
+    return Math.max(this.maxShuffles - this.shuffleCount, 0);
+  }
+
+  public canShuffle(): boolean {
+    return this.shuffleLeft > 0;
+  }
+
+  public manualShuffle(): boolean {
+    if (!this.canShuffle()) return false;
+    this.board.shuffle();
+    this.shuffleCount++;
+    return true;
+  }
+
   public click(
     row: number,
     col: number,

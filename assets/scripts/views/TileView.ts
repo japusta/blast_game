@@ -1,4 +1,4 @@
-import { TileModel, SuperType } from '../models/TileModel';
+import { TileModel, SuperType } from "../models/TileModel";
 
 const { ccclass, property } = cc._decorator;
 

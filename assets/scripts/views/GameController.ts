@@ -10,22 +10,22 @@ const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class GameController extends cc.Component {
-  //  Prefab + Grid 
+  //  Prefab + Grid
   @property(cc.Prefab) tilePrefab!: cc.Prefab;
   @property(cc.Node) gridNode!: cc.Node;
 
-  //  поля HUD} 
+  //  поля HUD}
   @property(cc.Label) scoreLabel!: cc.Label;
   @property(cc.Label) movesLabel!: cc.Label;
   // @property(cc.Label) boosterLabel!: cc.Label;
 
-  //  Попап контейнеры и окна 
+  //  Попап контейнеры и окна
   @property(cc.Node) popupContainer!: cc.Node;
   @property(cc.Node) winPopup!: cc.Node;
   @property(cc.Node) losePopup!: cc.Node;
   @property(cc.Node) customPopup!: cc.Node;
 
-  //  кастомные кнопки и кнопка старт 
+  //  кастомные кнопки и кнопка старт
   @property(cc.EditBox) movesInput!: cc.EditBox;
   @property(cc.EditBox) scoreInput!: cc.EditBox;
   @property(cc.Button) startCustomBtn!: cc.Button;
@@ -94,7 +94,12 @@ export default class GameController extends cc.Component {
     // создаём новую модель через фабрику
     this.model = this.gameFactory.create(rows, cols, moves, target);
     // создаём представление поля
-    this.gridView = new GridView(this.gridNode, this.tilePrefab, this.tileSize, this.tileGap);
+    this.gridView = new GridView(
+      this.gridNode,
+      this.tilePrefab,
+      this.tileSize,
+      this.tileGap
+    );
 
     // рендерим поле и обновляем HUD
     this.gridView.render(this.model, this.onTileClicked.bind(this));
@@ -157,12 +162,9 @@ export default class GameController extends cc.Component {
     if (this.model.score >= this.model.targetScore) {
       this.uiManager.showPopup(this.winPopup);
       this.gameOver = true;
-     
     } else if (this.model.movesLeft <= 0) {
       this.uiManager.showPopup(this.losePopup);
       this.gameOver = true;
-
     }
   }
-
 }

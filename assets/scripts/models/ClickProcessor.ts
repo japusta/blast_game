@@ -31,7 +31,11 @@ export class ClickProcessor implements IClickProcessor {
 
     const tile = this.board.getTile(row, col);
     if (!tile) {
-      return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
+      return {
+        result: { removed: [], moved: [], created: [], super: null },
+        scoreDelta: 0,
+        consumeMove: false,
+      };
     }
 
     if (useBooster === BoosterType.Teleport && r2 != null && c2 != null) {
@@ -45,18 +49,37 @@ export class ClickProcessor implements IClickProcessor {
     }
 
     if (toRemove.length <= 1) {
-      return { result: { removed: [], moved: [], created: [], super: null, triggerType }, scoreDelta: 0, consumeMove: false };
+      return {
+        result: {
+          removed: [],
+          moved: [],
+          created: [],
+          super: null,
+          triggerType,
+        },
+        scoreDelta: 0,
+        consumeMove: false,
+      };
     }
 
     const removed = toRemove
       .filter((t): t is TileModel => t != null)
       .map((t) => ({ row: t.row, col: t.col }));
     const isSameColor = toRemove.every((t) => t.color === toRemove[0].color);
-    const allowSuper = !useBooster && !tile.isSuper && isSameColor && toRemove.length >= this.board.superThreshold;
+    const allowSuper =
+      !useBooster &&
+      !tile.isSuper &&
+      isSameColor &&
+      toRemove.length >= this.board.superThreshold;
 
-    const { moved, created, superTile } = this.board.removeGroup(toRemove, allowSuper);
+    const { moved, created, superTile } = this.board.removeGroup(
+      toRemove,
+      allowSuper
+    );
     const scoreDelta = this.calcPoints(toRemove.length);
-    const superInfo = superTile ? { row: superTile.row, col: superTile.col, type: superTile.superType } : null;
+    const superInfo = superTile
+      ? { row: superTile.row, col: superTile.col, type: superTile.superType }
+      : null;
 
     return {
       result: { removed, moved, created, super: superInfo, triggerType },
@@ -65,13 +88,22 @@ export class ClickProcessor implements IClickProcessor {
     };
   }
 
-  private handleTeleport(row: number, col: number, r2: number, c2: number): ClickOutcome {
+  private handleTeleport(
+    row: number,
+    col: number,
+    r2: number,
+    c2: number
+  ): ClickOutcome {
     const isAdjacent =
       (row === r2 && Math.abs(col - c2) === 1) ||
       (col === c2 && Math.abs(row - r2) === 1);
 
     if (!isAdjacent) {
-      return { result: { removed: [], moved: [], created: [], super: null }, scoreDelta: 0, consumeMove: false };
+      return {
+        result: { removed: [], moved: [], created: [], super: null },
+        scoreDelta: 0,
+        consumeMove: false,
+      };
     }
 
     this.teleport.use(this.board, row, col, r2, c2);
@@ -93,9 +125,15 @@ export class ClickProcessor implements IClickProcessor {
     return tiles;
   }
 
-  private collectTiles(tile: TileModel): { tiles: TileModel[]; trigger: SuperType | null } {
+  private collectTiles(tile: TileModel): {
+    tiles: TileModel[];
+    trigger: SuperType | null;
+  } {
     if (tile.isSuper) {
-      return { tiles: this.activateSuper(tile).filter((t) => t != null), trigger: tile.superType };
+      return {
+        tiles: this.activateSuper(tile).filter((t) => t != null),
+        trigger: tile.superType,
+      };
     }
     return { tiles: this.board.findGroup(tile), trigger: null };
   }

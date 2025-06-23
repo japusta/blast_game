@@ -11,6 +11,7 @@ export class GameModel {
   targetScore: number;
   shuffleCount = 0;
   maxShuffles = 3;
+  outOfMoves = false;
 
   public readonly bomb: IBooster;
   public readonly teleport: IBooster;
@@ -60,15 +61,16 @@ export class GameModel {
     if (this.score >= this.targetScore) {
       // вин стейт
     } else if (!this.board.hasMoves()) {
-      if (this.shuffleCount < this.maxShuffles) {
+      while (this.shuffleCount < this.maxShuffles && !this.board.hasMoves()) {
         this.board.shuffle();
         this.shuffleCount++;
-      } else {
+      }
+      if (!this.board.hasMoves()) {
+        this.outOfMoves = true;
         // луз стейт
       }
     }
 
     return outcome.result;
   }
-
 }

@@ -30,8 +30,15 @@ export class GameFactory {
     const board = this.boardFactory(rows, cols, this.randomizer);
     const bomb = this.bombFactory();
     const teleport = this.teleportFactory();
-    const superFactory = new SuperHandlerFactory((bomb as BombBooster).blastRadius);
-    const processor = this.processorFactory(board, bomb, teleport, superFactory);
+    const superFactory = new SuperHandlerFactory(
+      (bomb as BombBooster).blastRadius
+    );
+    const processor = this.processorFactory(
+      board,
+      bomb,
+      teleport,
+      superFactory
+    );
     return new GameModel(board, moves, target, processor, bomb, teleport);
   }
 }

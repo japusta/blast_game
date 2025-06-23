@@ -12,7 +12,12 @@ export class TileRandomizer implements ITileRandomizer {
   }
 
   randomSuperType(): SuperType {
-    const types = [SuperType.Row, SuperType.Column, SuperType.Radius, SuperType.Full];
+    const types = [
+      SuperType.Row,
+      SuperType.Column,
+      SuperType.Radius,
+      SuperType.Full,
+    ];
     const weights = [0.3, 0.3, 0.25, 0.15];
     let sum = 0;
     const r = Math.random();

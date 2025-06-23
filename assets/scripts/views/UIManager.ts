@@ -16,7 +16,12 @@ export class UIManager {
     private movesLabel: cc.Label,
     private countBombLabel: cc.Label,
     private countTeleportLabel: cc.Label,
-    private restartGame: (rows: number, cols: number, moves: number, target: number) => void,
+    private restartGame: (
+      rows: number,
+      cols: number,
+      moves: number,
+      target: number
+    ) => void,
     private onBoosterSelect: (booster: BoosterType) => void
   ) {}
 
@@ -26,11 +31,15 @@ export class UIManager {
     [this.winPopup, this.losePopup].forEach((popup) => {
       const restartBtn = popup.getChildByName("RestartButtonTemplate");
       if (restartBtn) {
-        restartBtn.getComponent(cc.Button)!.node.on("click", this.onRestartDefault, this);
+        restartBtn
+          .getComponent(cc.Button)!
+          .node.on("click", this.onRestartDefault, this);
       }
       const customBtn = popup.getChildByName("ShowCustomBtn");
       if (customBtn) {
-        customBtn.getComponent(cc.Button)!.node.on("click", this.onShowCustom, this);
+        customBtn
+          .getComponent(cc.Button)!
+          .node.on("click", this.onShowCustom, this);
       }
     });
 

@@ -3,7 +3,7 @@ export enum TileColor {
   Green,
   Blue,
   Yellow,
-  Purple
+  Purple,
 }
 
 export enum SuperType {
@@ -11,7 +11,7 @@ export enum SuperType {
   Row,
   Column,
   Radius,
-  Full
+  Full,
 }
 
 export class TileModel {

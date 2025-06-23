@@ -22,7 +22,7 @@ export class BoardModel implements IBoardModel {
   }
 
   public getColumn(col: number): TileModel[] {
-    return this._grid.map(r => r[col]);
+    return this._grid.map((r) => r[col]);
   }
 
   public getAllTiles(): TileModel[] {
@@ -36,7 +36,11 @@ export class BoardModel implements IBoardModel {
     return this._grid[row][col];
   }
 
-  public getTilesInRadius(row: number, col: number, radius: number): TileModel[] {
+  public getTilesInRadius(
+    row: number,
+    col: number,
+    radius: number
+  ): TileModel[] {
     const tiles: TileModel[] = [];
     for (let r = row - radius; r <= row + radius; r++) {
       for (let c = col - radius; c <= col + radius; c++) {
@@ -69,10 +73,14 @@ export class BoardModel implements IBoardModel {
     TileColor.Green,
     TileColor.Blue,
     TileColor.Yellow,
-    TileColor.Purple
+    TileColor.Purple,
   ];
 
-  constructor(rows: number, cols: number, randomizer: ITileRandomizer = new TileRandomizer()) {
+  constructor(
+    rows: number,
+    cols: number,
+    randomizer: ITileRandomizer = new TileRandomizer()
+  ) {
     this.rows = rows;
     this.cols = cols;
     this.randomizer = randomizer;
@@ -108,7 +116,9 @@ export class BoardModel implements IBoardModel {
         forbiddenColors.add(down1.color);
       }
     }
-    const availableColors = this.allColors.filter(col => !forbiddenColors.has(col));
+    const availableColors = this.allColors.filter(
+      (col) => !forbiddenColors.has(col)
+    );
     const color = this.randomizer.randomColor(availableColors);
     return new TileModel(r, c, color);
   }
@@ -128,8 +138,14 @@ export class BoardModel implements IBoardModel {
       visited.add(key);
       result.push(t);
 
-      for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        const nr = t.row + dr, nc = t.col + dc;
+      for (const [dr, dc] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nr = t.row + dr,
+          nc = t.col + dc;
         if (nr >= 0 && nr < this.rows && nc >= 0 && nc < this.cols) {
           const n = this._grid[nr][nc];
           if (n && n.color === target && !visited.has(`${nr},${nc}`)) {
@@ -146,9 +162,9 @@ export class BoardModel implements IBoardModel {
     group: TileModel[],
     createSuper: boolean = true
   ): {
-    moved: { from: { r: number, c: number }, to: { r: number, c: number } }[],
-    created: { row: number, col: number, color: number }[],
-    superTile: TileModel | null
+    moved: { from: { r: number; c: number }; to: { r: number; c: number } }[];
+    created: { row: number; col: number; color: number }[];
+    superTile: TileModel | null;
   } {
     this.removeTiles(group);
 
@@ -176,8 +192,14 @@ export class BoardModel implements IBoardModel {
     return superTile;
   }
 
-  private dropTiles(): { from: { r: number; c: number }; to: { r: number; c: number } }[] {
-    const moved: { from: { r: number; c: number }; to: { r: number; c: number } }[] = [];
+  private dropTiles(): {
+    from: { r: number; c: number };
+    to: { r: number; c: number };
+  }[] {
+    const moved: {
+      from: { r: number; c: number };
+      to: { r: number; c: number };
+    }[] = [];
     for (let c = 0; c < this.cols; c++) {
       let pointer = this.rows - 1;
       for (let r = this.rows - 1; r >= 0; r--) {
@@ -231,7 +253,10 @@ export class BoardModel implements IBoardModel {
   }
 
   shuffle() {
-    const flat = this._grid.reduce((acc, row) => acc.concat(row), [] as TileModel[]);
+    const flat = this._grid.reduce(
+      (acc, row) => acc.concat(row),
+      [] as TileModel[]
+    );
     for (let i = flat.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [flat[i].color, flat[j].color] = [flat[j].color, flat[i].color];

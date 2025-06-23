@@ -9,10 +9,7 @@ export class BombBooster implements IBooster {
    * @param radius радиус взрыва
    * @param initialCount сколько раз можно использовать бомбу
    */
-  constructor(
-    private readonly radius: number,
-    initialCount: number = 3
-  ) {
+  constructor(private readonly radius: number, initialCount: number = 3) {
     this._count = initialCount;
   }
 

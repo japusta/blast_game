@@ -1,6 +1,7 @@
 import { BoosterType } from "../models/BoosterType";
 import { GameModel } from "../models/GameModel";
 import ButtonHoverEffect from "./ButtonHoverEffect";
+import ButtonActiveEffect from "./ButtonActiveEffect";
 
 export class UIManager {
   constructor(
@@ -13,17 +14,20 @@ export class UIManager {
     private startCustomBtn: cc.Button,
     private bombButton: cc.Button,
     private teleportButton: cc.Button,
+    private shuffleButton: cc.Button,
     private scoreLabel: cc.Label,
     private movesLabel: cc.Label,
     private countBombLabel: cc.Label,
     private countTeleportLabel: cc.Label,
+    private countShuffleLabel: cc.Label,
     private restartGame: (
       rows: number,
       cols: number,
       moves: number,
       target: number
     ) => void,
-    private onBoosterSelect: (booster: BoosterType) => void
+    private onBoosterSelect: (booster: BoosterType) => void,
+    private onShuffle: () => void
   ) {}
 
   public init() {
@@ -47,8 +51,12 @@ export class UIManager {
     this.startCustomBtn.node.on("click", this.onRestartCustom, this);
     this.bombButton.node.on("click", this.onBombButton, this);
     this.teleportButton.node.on("click", this.onTeleportButton, this);
-        this.bombButton.node.addComponent(ButtonHoverEffect);
+    this.shuffleButton.node.on("click", this.onShuffleButton, this);
+    this.bombButton.node.addComponent(ButtonHoverEffect);
     this.teleportButton.node.addComponent(ButtonHoverEffect);
+    this.shuffleButton.node.addComponent(ButtonHoverEffect);
+    this.bombButton.node.addComponent(ButtonActiveEffect).enabled = false;
+    this.teleportButton.node.addComponent(ButtonActiveEffect).enabled = false;
   }
 
   public hideAllPopups() {
@@ -71,10 +79,16 @@ export class UIManager {
     this.movesLabel.string = `${model.movesLeft}`;
     this.countBombLabel.string = `${model.bomb.count}`;
     this.countTeleportLabel.string = `${model.teleport.count}`;
-        this.bombButton.interactable = model.bomb.count > 0;
+    this.countShuffleLabel.string = `${model.shuffleLeft}`;
+    this.bombButton.interactable = model.bomb.count > 0;
     this.teleportButton.interactable = model.teleport.count > 0;
+    this.shuffleButton.interactable = model.canShuffle();
     this.bombButton.node.opacity = active === BoosterType.Bomb ? 180 : 255;
     this.teleportButton.node.opacity = active === BoosterType.Teleport ? 180 : 255;
+    const bombActive = this.bombButton.node.getComponent(ButtonActiveEffect)!;
+    const teleportActive = this.teleportButton.node.getComponent(ButtonActiveEffect)!;
+    bombActive.enabled = active === BoosterType.Bomb;
+    teleportActive.enabled = active === BoosterType.Teleport;
   }
 
   private onRestartDefault = () => {
@@ -121,6 +135,10 @@ export class UIManager {
 
   private onTeleportButton = () => {
     this.onBoosterSelect(BoosterType.Teleport);
+  };
+
+  private onShuffleButton = () => {
+    this.onShuffle();
   };
 }
 

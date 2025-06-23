@@ -32,10 +32,12 @@ export default class GameController extends cc.Component {
   /** Кнопки бустеров */
   @property(cc.Button) bombButton!: cc.Button;
   @property(cc.Button) teleportButton!: cc.Button;
+  @property(cc.Button) shuffleButton!: cc.Button;
 
   /** Лейблы для оставшихся применений */
   @property(cc.Label) countBombLabel!: cc.Label;
   @property(cc.Label) countTeleportLabel!: cc.Label;
+  @property(cc.Label) countShuffleLabel!: cc.Label;
   private model!: GameModel;
   private gridView!: IGridView;
   private useBooster: BoosterType | null = null;
@@ -62,16 +64,24 @@ export default class GameController extends cc.Component {
       this.startCustomBtn,
       this.bombButton,
       this.teleportButton,
+      this.shuffleButton,
       this.scoreLabel,
       this.movesLabel,
       this.countBombLabel,
       this.countTeleportLabel,
+      this.countShuffleLabel,
       (r, c, m, t) => this._restartGame(r, c, m, t),
       (booster) => {
-        this.useBooster = booster;
-        if (booster === BoosterType.Teleport) this.teleportFrom = null;
-        this.uiManager.updateUI(this.model);
-      }
+        if (this.useBooster === booster) {
+          this.useBooster = null;
+          this.teleportFrom = null;
+        } else {
+          this.useBooster = booster;
+          if (booster === BoosterType.Teleport) this.teleportFrom = null;
+        }
+        this.uiManager.updateUI(this.model, this.useBooster);
+      },
+      () => this.onShuffle()
     );
     this.uiManager.init();
   }
@@ -103,7 +113,7 @@ export default class GameController extends cc.Component {
 
     // рендерим поле и обновляем HUD
     this.gridView.render(this.model, this.onTileClicked.bind(this));
-    this.uiManager.updateUI(this.model);
+    this.uiManager.updateUI(this.model, this.useBooster);
   }
 
   /** Обработка клика + анимации + проверка конца */
@@ -121,7 +131,7 @@ export default class GameController extends cc.Component {
   private async handleTeleportClick(row: number, col: number) {
     if (!this.teleportFrom) {
       this.teleportFrom = [row, col];
-      this.uiManager.updateUI(this.model);
+      this.uiManager.updateUI(this.model, this.useBooster);
       return;
     }
 
@@ -131,7 +141,7 @@ export default class GameController extends cc.Component {
     if (res.moved.length === 0) {
       this.teleportFrom = null;
       this.useBooster = null;
-      this.uiManager.updateUI(this.model);
+      this.uiManager.updateUI(this.model, this.useBooster);
       return;
     }
 
@@ -139,7 +149,7 @@ export default class GameController extends cc.Component {
     this.gridView.render(this.model, this.onTileClicked.bind(this));
     this.teleportFrom = null;
     this.useBooster = null;
-    this.uiManager.updateUI(this.model);
+    this.uiManager.updateUI(this.model, this.useBooster);
   }
 
   private async handleRegularClick(row: number, col: number) {
@@ -158,7 +168,7 @@ export default class GameController extends cc.Component {
       col,
       used
     );
-    this.uiManager.updateUI(this.model);
+    this.uiManager.updateUI(this.model, this.useBooster);
     if (this.model.score >= this.model.targetScore) {
       this.uiManager.showPopup(this.winPopup);
       this.gameOver = true;
@@ -166,5 +176,12 @@ export default class GameController extends cc.Component {
       this.uiManager.showPopup(this.losePopup);
       this.gameOver = true;
     }
+  }
+
+  private onShuffle() {
+    if (this.model.manualShuffle()) {
+      this.gridView.render(this.model, this.onTileClicked.bind(this));
+    }
+    this.uiManager.updateUI(this.model, this.useBooster);
   }
 }
